@@ -832,7 +832,6 @@
 		justify-content: space-between;
 		align-items: center;
 		padding-bottom: 1rem;
-		border-bottom: 2px solid #f4eee0;;
 		padding: 0 1rem;
 	}
 
@@ -1240,6 +1239,14 @@
 
 		.controls-container {
 			margin-bottom: 0.5rem;
+		}
+
+		.mods-container {
+			height: 100%;
+		}
+
+		.mods-grid {
+			padding: 0;
 		}
 	}
 </style>
