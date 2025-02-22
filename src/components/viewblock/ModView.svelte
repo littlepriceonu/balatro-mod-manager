@@ -509,6 +509,10 @@
 {/if}
 
 <style>
+	:global(.description > p > img) {
+		width: 100%;
+	}
+
 	.mod-view {
 		position: fixed;
 		top: 0;
