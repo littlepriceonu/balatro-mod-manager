@@ -731,6 +731,7 @@
 						<div class="mod-info">
 							<h3>{mod.title}</h3>
 							<p>
+								<!-- truncate function is left here just in case -->
 								{truncateText(stripMarkdown(mod.description))}
 							</p>
 						</div>
@@ -776,6 +777,14 @@
 		display: flex;
 		gap: 1rem;
 		height: 95%;
+	}
+
+	.mod-info > p {
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		overflow: hidden;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
 	}
 
 	.separator {
