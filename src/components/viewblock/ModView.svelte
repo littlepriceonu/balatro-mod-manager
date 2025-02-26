@@ -60,10 +60,19 @@
 		isMod: boolean;
 		modName: string;
 	} {
-		// Common patterns for mod links
+		// Skip file-specific links (links to .txt, .lua, etc. files or specific paths)
+		if (
+			url.match(/\.(txt|lua|json|md|png|jpg|jpeg|gif|mp3|ogg|wav)$/) ||
+			url.includes("/blob/") ||
+			url.includes("/tree/")
+		) {
+			return { isMod: false, modName: "" };
+		}
+
+		// Common patterns for mod repository links
 		const githubModPattern1 = /github\.com\/[^\/]+\/([^\/]+)$/;
 		const githubModPattern2 =
-			/github\.com\/[^\/]+\/([^\/]+)(\/|\/tree\/|\/blob\/)/;
+			/github\.com\/[^\/]+\/([^\/]+)(\/|\/tree\/main|\/tree\/master)?$/;
 
 		// Check if URL matches any pattern
 		let match =
@@ -119,6 +128,7 @@
 
 		return { isMod: false, modName: "" };
 	}
+
 	async function loadSteamoddedVersions() {
 		if (loadingVersions) return;
 		try {
