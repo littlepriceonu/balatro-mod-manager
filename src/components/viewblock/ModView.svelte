@@ -14,6 +14,8 @@
 	import { marked } from "marked";
 	import { invoke } from "@tauri-apps/api/core";
 	import { cachedVersions } from "../../stores/modStore";
+	import { modsStore } from "../../stores/modStore";
+
 	const VERSION_CACHE_DURATION = 60 * 60 * 1000;
 	const { mod, onCheckDependencies } = $props<{
 		mod: Mod;
@@ -54,6 +56,69 @@
 	let versionLoadStarted = false;
 	let prevModTitle = "";
 
+	function isInternalModLink(url: string): {
+		isMod: boolean;
+		modName: string;
+	} {
+		// Common patterns for mod links
+		const githubModPattern1 = /github\.com\/[^\/]+\/([^\/]+)$/;
+		const githubModPattern2 =
+			/github\.com\/[^\/]+\/([^\/]+)(\/|\/tree\/|\/blob\/)/;
+
+		// Check if URL matches any pattern
+		let match =
+			url.match(githubModPattern1) || url.match(githubModPattern2);
+
+		if (match && match[1]) {
+			// Repository name from URL (will have dashes instead of spaces)
+			const repoName = match[1].toLowerCase();
+
+			// Get mods from the store
+			let modsArray: Mod[] = [];
+			modsStore.subscribe((m) => (modsArray = m))();
+
+			// Try several matching strategies
+			const foundMod = modsArray.find((mod) => {
+				// Direct match on title (case insensitive)
+				if (mod.title.toLowerCase() === repoName) {
+					return true;
+				}
+
+				// Match on repo URL
+				if (mod.repo && mod.repo.toLowerCase().includes(repoName)) {
+					return true;
+				}
+
+				// Match title with spaces replaced by dashes or underscores
+				const titleDashes = mod.title
+					.toLowerCase()
+					.replace(/\s+/g, "-");
+				const titleUnderscores = mod.title
+					.toLowerCase()
+					.replace(/\s+/g, "_");
+
+				if (repoName === titleDashes || repoName === titleUnderscores) {
+					return true;
+				}
+
+				// Match title with spaces removed
+				const titleNoSpaces = mod.title
+					.toLowerCase()
+					.replace(/\s+/g, "");
+				if (repoName === titleNoSpaces) {
+					return true;
+				}
+
+				return false;
+			});
+
+			if (foundMod) {
+				return { isMod: true, modName: foundMod.title };
+			}
+		}
+
+		return { isMod: false, modName: "" };
+	}
 	async function loadSteamoddedVersions() {
 		if (loadingVersions) return;
 		try {
@@ -312,28 +377,89 @@
 
 	function handleMarkdownClick(event: MouseEvent | KeyboardEvent) {
 		const anchor = (event.target as HTMLElement).closest("a");
-		if (anchor && anchor.href.startsWith("http")) {
+		if (!anchor || !anchor.href) return;
+
+		// Check if this is an internal mod link using the data attribute
+		const internalModName = anchor.getAttribute("data-internal-mod");
+
+		if (internalModName) {
+			event.preventDefault();
+			event.stopPropagation(); // This is crucial
+
+			let modsArray: Mod[] = [];
+			modsStore.subscribe((m) => (modsArray = m))();
+
+			const targetMod = modsArray.find(
+				(m) => m.title === internalModName,
+			);
+			if (targetMod) {
+				currentModView.set(targetMod);
+			}
+		} else if (anchor.href.startsWith("http")) {
+			// External link
 			event.preventDefault();
 			open(anchor.href).catch((e) =>
 				console.error("Failed to open link:", e),
 			);
 		}
 	}
+
+	function processInternalModLinks() {
+		setTimeout(() => {
+			const descriptionElement = document.querySelector(".description");
+			if (!descriptionElement) return;
+
+			const links = descriptionElement.querySelectorAll("a");
+
+			links.forEach((link) => {
+				if (link.href.startsWith("http")) {
+					const { isMod, modName } = isInternalModLink(link.href);
+					if (isMod) {
+						link.classList.add("internal-mod-link");
+						link.setAttribute("title", "Opens in Mod Manager");
+						link.setAttribute("data-internal-mod", modName);
+
+						// Add direct click handler to each internal link
+						link.onclick = (e) => {
+							e.preventDefault();
+							e.stopPropagation();
+
+							let modsArray: Mod[] = [];
+							modsStore.subscribe((m) => (modsArray = m))();
+
+							const targetMod = modsArray.find(
+								(m) => m.title === modName,
+							);
+							if (targetMod) {
+								currentModView.set(targetMod);
+							}
+
+							return false; // Extra prevention of default behavior
+						};
+					}
+				}
+			});
+		}, 0);
+	}
+
 	const isModInstalled = async (mod: Mod) => {
 		await getAllInstalledMods();
 		const status = installedMods.some((m) => m.name === mod.title);
 		installationStatus.update((s) => ({ ...s, [mod.title]: status }));
 		return status;
 	};
+
 	$effect(() => {
 		if (mod?.description) {
 			Promise.resolve(marked(mod.description)).then((result) => {
 				renderedDescription = result;
+				processInternalModLinks();
 			});
 		} else {
 			renderedDescription = "";
 		}
 	});
+
 	function handleClose() {
 		currentModView.set(null);
 	}
@@ -778,6 +904,37 @@
 	.description :global(a) {
 		color: #56a786;
 		text-decoration: none;
+	}
+	.description :global(a.internal-mod-link) {
+		/* Use Balatro's gold color for internal mod links */
+		color: #fdcf51 !important;
+		position: relative;
+	}
+
+	.description :global(a.internal-mod-link::after) {
+		display: inline-block;
+		margin-left: 3px;
+		transform: rotate(-45deg);
+		font-weight: bold;
+	}
+
+	.description :global(a.internal-mod-link:hover) {
+		text-decoration: underline;
+		filter: brightness(1.2);
+	}
+
+	.description :global(a.internal-mod-link:hover::before) {
+		content: "Opens in Mod Manager";
+		position: absolute;
+		bottom: -25px;
+		left: 0;
+		background: rgba(0, 0, 0, 0.8);
+		color: white;
+		padding: 4px 8px;
+		border-radius: 4px;
+		font-size: 0.8em;
+		white-space: nowrap;
+		z-index: 10;
 	}
 
 	.description :global(a:hover) {
