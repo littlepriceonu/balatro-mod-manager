@@ -56,6 +56,8 @@
 	let versionLoadStarted = false;
 	let prevModTitle = "";
 
+	// FIX: Currently very laggy, after clicked on mentioned mod
+	// FIXME: (Very slow) Maybe create this function in Rust?
 	function isInternalModLink(url: string): {
 		isMod: boolean;
 		modName: string;
