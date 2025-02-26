@@ -1,4 +1,6 @@
 use crate::errors::AppError;
+#[cfg(target_os = "windows")]
+use std::fs::File;
 #[cfg(target_os = "macos")]
 use std::fs::{self, File};
 #[cfg(target_os = "macos")]
@@ -8,8 +10,16 @@ use std::path::Path;
 use std::path::PathBuf;
 
 #[cfg(target_os = "windows")]
-pub const EMBEDDED_DLL: &[u8] = include_bytes!("../../resources/version.dll");
+pub async fn ensure_version_dll_exists(game_path: &PathBuf) -> Result<PathBuf, AppError> {
+    let dll_path = game_path.join("version.dll");
 
+    // If the DLL doesn't exist, download it
+    if !dll_path.exists() {
+        download_version_dll(&dll_path).await?;
+    }
+
+    Ok(dll_path)
+}
 
 #[cfg(target_os = "macos")]
 fn detect_architecture() -> Result<&'static str, AppError> {
@@ -89,7 +99,12 @@ pub async fn ensure_lovely_exists() -> Result<PathBuf, AppError> {
         if balatro_paths.is_empty() {
             return Err(AppError::DirNotFound(PathBuf::from("Balatro installation")));
         }
-        Ok(balatro_paths[0].join("Balatro.exe"))
+
+        // Ensure version.dll exists in the game directory
+        let game_path = &balatro_paths[0];
+        ensure_version_dll_exists(game_path).await?;
+
+        Ok(game_path.join("Balatro.exe"))
     }
 
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
@@ -161,6 +176,93 @@ async fn download_and_install_lovely(target_path: &Path) -> Result<(), AppError>
 
     // Set permissions
     std::fs::set_permissions(target_path, std::fs::Permissions::from_mode(0o755))?;
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+async fn download_version_dll(target_path: &PathBuf) -> Result<(), AppError> {
+    let temp_dir = tempfile::tempdir().map_err(|e| AppError::FileWrite {
+        path: PathBuf::from("temp directory"),
+        source: e.to_string(),
+    })?;
+
+    // URL to the latest version.dll in the lovely injector repository
+    let url = "https://github.com/ethangreen-dev/lovely-injector/releases/latest/download/lovely-x86_64-pc-windows-msvc.zip";
+
+    log::info!("Downloading lovely injector for Windows from {}", url);
+
+    // Download the ZIP file
+    let client = reqwest::Client::new();
+    let response = client
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| AppError::Network(format!("Failed to download lovely injector: {}", e)))?;
+
+    // Save to temp zip file
+    let temp_zip = temp_dir.path().join("lovely.zip");
+    let mut file = File::create(&temp_zip).map_err(|e| AppError::FileWrite {
+        path: temp_zip.clone(),
+        source: e.to_string(),
+    })?;
+
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| AppError::Network(format!("Failed to read download response: {}", e)))?;
+
+    std::io::copy(&mut bytes.as_ref(), &mut file).map_err(|e| AppError::FileWrite {
+        path: temp_zip.clone(),
+        source: e.to_string(),
+    })?;
+
+    // Extract the ZIP file
+    let zip_file = File::open(&temp_zip).map_err(|e| AppError::FileRead {
+        path: temp_zip.clone(),
+        source: e.to_string(),
+    })?;
+
+    let mut archive = zip::ZipArchive::new(zip_file).map_err(|e| AppError::FileRead {
+        path: temp_zip.clone(),
+        source: e.to_string(),
+    })?;
+
+    // Find and extract version.dll from the ZIP
+    let mut found_dll = false;
+    for i in 0..archive.len() {
+        let mut file = match archive.by_index(i) {
+            Ok(file) => file,
+            Err(e) => {
+                log::warn!("Failed to access zip entry: {}", e);
+                continue;
+            }
+        };
+
+        let entry_name = file.name().to_string();
+
+        if entry_name.ends_with("version.dll") {
+            log::info!("Found version.dll in zip archive");
+            let mut outfile = File::create(target_path).map_err(|e| AppError::FileWrite {
+                path: target_path.to_path_buf(),
+                source: e.to_string(),
+            })?;
+
+            std::io::copy(&mut file, &mut outfile).map_err(|e| AppError::FileWrite {
+                path: target_path.to_path_buf(),
+                source: e.to_string(),
+            })?;
+
+            found_dll = true;
+            break;
+        }
+    }
+
+    if !found_dll {
+        return Err(AppError::InvalidState(
+            "version.dll not found in downloaded zip".to_string(),
+        ));
+    }
 
     Ok(())
 }

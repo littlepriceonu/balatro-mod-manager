@@ -28,8 +28,8 @@ pub struct Mod {
     pub title: String,
     pub description: String,
     pub image: String,
-    #[serde(rename = "lastUpdated")]
-    pub last_updated: String,
+    // #[serde(rename = "lastUpdated")]
+    // pub last_updated: String,
     #[serde(rename = "categories")]
     pub categories: Vec<Category>,
     #[serde(rename = "colors")]
@@ -61,6 +61,21 @@ pub enum Category {
     Miscellaneous = 4,
     ResourcePacks = 5,
     API = 6,
+}
+
+impl From<std::string::String> for Category {
+    fn from(value: std::string::String) -> Self {
+        match value.as_str() {
+            "Content" => Category::Content,
+            "Joker" => Category::Joker,
+            "Quality of Life" => Category::QualityOfLife,
+            "Technical" => Category::Technical,
+            "Miscellaneous" => Category::Miscellaneous,
+            "Resource Packs" => Category::ResourcePacks,
+            "API" => Category::API,
+            _ => panic!("Invalid category: {}", value),
+        }
+    }
 }
 
 impl From<i32> for Category {
@@ -304,7 +319,7 @@ mod tests {
                 title: "Test Mod".into(),
                 description: "Test Description".into(),
                 image: "test.png".into(),
-                last_updated: "2024-01-01".into(),
+                // last_updated: "2024-01-01".into(),
                 categories: vec![Category::Content],
                 colors: ColorPair {
                     color1: "#fff".into(),

@@ -1,14 +1,7 @@
 <script lang="ts">
 	import { fly } from "svelte/transition";
 	import { cubicOut } from "svelte/easing";
-	import {
-		Download,
-		Clock,
-		Trash2,
-		User,
-		ArrowLeft,
-		Github,
-	} from "lucide-svelte";
+	import { Download, Trash2, User, ArrowLeft, Github } from "lucide-svelte";
 	import { onMount, onDestroy } from "svelte";
 	import { open } from "@tauri-apps/plugin-shell";
 	import {
@@ -29,10 +22,6 @@
 			talisman: boolean;
 		}) => void;
 	}>();
-	let cachedVersionsValue: { steamodded: string[]; talisman: string[] };
-	cachedVersions.subscribe((value) => {
-		cachedVersionsValue = value;
-	});
 	const isDefaultCover = (imageUrl: string) => imageUrl.includes("cover.jpg");
 	function handleAuxClick(event: MouseEvent) {
 		if (event.button === 3) {
@@ -40,14 +29,21 @@
 			handleClose();
 		}
 	}
-	async function openImagePopup() {
-		if (!isDefaultCover(mod.image)) {
-			await invoke("open_image_popup", {
-				imageUrl: mod.image,
-				title: mod.title,
-			});
-		}
-	}
+	// async function openImagePopup() {
+	// 	console.log("Opening popup with image:", {
+	// 		imageType: typeof mod.image,
+	// 		imageLength: mod.image.length,
+	// 		imagePreview: mod.image.substring(0, 100) + "...",
+	// 	});
+	//
+	// 	if (!isDefaultCover(mod.image)) {
+	// 		await invoke("open_image_popup", {
+	// 			imageUrl: mod.image,
+	// 			title: mod.title,
+	// 		});
+	// 	}
+	// }
+
 	let installedMods: InstalledMod[] = [];
 	let steamoddedVersions = $state<string[]>([]);
 	let talismanVersions = $state<string[]>([]);
@@ -88,9 +84,11 @@
 			const versions: string[] = await invoke("get_steamodded_versions");
 			steamoddedVersions = versions;
 			selectedVersion = "newest";
+
 			if (versions.length > 0) {
 				selectedVersion = versions[0];
 			}
+
 			cachedVersions.update((c) => ({ ...c, steamodded: versions }));
 			await invoke("save_versions_cache", {
 				modType: "steamodded",
@@ -159,20 +157,27 @@
 			console.error("Failed to get installed mods:", e);
 		}
 	};
+
 	const uninstallMod = async (mod: Mod) => {
 		const isCoreMod = ["steamodded", "talisman"].includes(
 			mod.title.toLowerCase(),
 		);
+
 		try {
 			await getAllInstalledMods();
 			const installedMod = installedMods.find(
-				(m) => m.name === mod.title,
+				(m) => m.name.toLowerCase() === mod.title.toLowerCase(),
 			);
+
 			if (!installedMod) return;
+
 			if (isCoreMod) {
+				// Get dependents
 				const dependents = await invoke<string[]>("get_dependents", {
 					modName: mod.title,
 				});
+
+				// Always show the dialog for core mods
 				uninstallDialogStore.set({
 					show: true,
 					modName: mod.title,
@@ -193,31 +198,47 @@
 			console.error("Failed to uninstall mod:", e);
 		}
 	};
+
 	const installMod = async (mod: Mod) => {
-		const dependencies = [];
-		if (mod.requires_steamodded) dependencies.push("Steamodded");
-		if (mod.requires_talisman) dependencies.push("Talisman");
+		// Check dependencies first before doing anything else
 		if (mod.requires_steamodded || mod.requires_talisman) {
+			// Check Steamodded if required
 			const steamoddedInstalled = mod.requires_steamodded
 				? await invoke<boolean>("check_mod_installation", {
 						modType: "Steamodded",
 					})
 				: true;
+
+			// Check Talisman if required
 			const talismanInstalled = mod.requires_talisman
 				? await invoke<boolean>("check_mod_installation", {
 						modType: "Talisman",
 					})
 				: true;
-			if (!steamoddedInstalled || !talismanInstalled) {
+
+			// If any dependency is missing, show the RequiresPopup
+
+			if (
+				(mod.requires_steamodded && !steamoddedInstalled) ||
+				(mod.requires_talisman && !talismanInstalled)
+			) {
+				// Call the handler with the appropriate requirements
 				onCheckDependencies?.({
 					steamodded: mod.requires_steamodded && !steamoddedInstalled,
 					talisman: mod.requires_talisman && !talismanInstalled,
 				});
-				return;
+				return; // Stop installation
 			}
 		}
+
+		// Build dependencies list for the database
+		const dependencies = [];
+		if (mod.requires_steamodded) dependencies.push("Steamodded");
+		if (mod.requires_talisman) dependencies.push("Talisman");
+
 		try {
 			loadingStates.update((s) => ({ ...s, [mod.title]: true }));
+
 			if (mod.title.toLowerCase() === "steamodded") {
 				let installedPath;
 				if (selectedVersion === "newest") {
@@ -288,6 +309,7 @@
 			loadingStates.update((s) => ({ ...s, [mod.title]: false }));
 		}
 	};
+
 	function handleMarkdownClick(event: MouseEvent | KeyboardEvent) {
 		const anchor = (event.target as HTMLElement).closest("a");
 		if (anchor && anchor.href.startsWith("http")) {
@@ -360,153 +382,138 @@
 	}}
 />
 
-{#if $currentModView}
-	<div
-		class="mod-view"
-		transition:fly={{ x: 300, duration: 300, easing: cubicOut }}
-	>
-		<button class="back-button" onclick={handleClose}>
-			<ArrowLeft size={20} /> <span>Back</span>
-		</button>
-		<div class="mod-content">
-			<h2>{mod.title}</h2>
-			<div class="content-grid">
-				<div class="left-column">
-					<div class="image-container">
-						{#if !isDefaultCover(mod.image)}
-							<button
-								class="image-button"
-								onclick={openImagePopup}
-								aria-label={`View full size image of ${mod.title}`}
-							>
-								<img
-									src={mod.image}
-									alt={mod.title}
-									class="clickable"
-									draggable="false"
-								/>
-							</button>
-						{:else}
+<div
+	class="mod-view"
+	transition:fly={{ x: 300, duration: 300, easing: cubicOut }}
+>
+	<button class="back-button" onclick={handleClose}>
+		<ArrowLeft size={20} /> <span>Back</span>
+	</button>
+	<div class="mod-content">
+		<h2>{mod.title}</h2>
+		<div class="content-grid">
+			<div class="left-column">
+				<div class="image-container">
+					{#if !isDefaultCover(mod.image)}
+						<button
+							class="image-button"
+							aria-label={`View full size image of ${mod.title}`}
+						>
 							<img
 								src={mod.image}
 								alt={mod.title}
 								draggable="false"
 							/>
-						{/if}
-					</div>
-					<div class="button-container">
-						<button
-							class="download-button"
-							class:installed={$installationStatus[mod.title]}
-							disabled={$installationStatus[mod.title] ||
-								$loadingStates[mod.title]}
-							onclick={() => installMod(mod)}
-						>
-							{#if $loadingStates[mod.title]}
-								<div class="spinner"></div>
-							{:else}
-								<Download size={18} />
-								{$installationStatus[mod.title]
-									? "Installed"
-									: "Download"}
-							{/if}
 						</button>
-						{#if $installationStatus[mod.title]}
-							<button
-								class="delete-button"
-								title="Remove Mod"
-								onclick={() => uninstallMod(mod)}
-							>
-								<Trash2 size={18} />
-							</button>
+					{:else}
+						<img
+							src={mod.image}
+							alt={mod.title}
+							draggable="false"
+						/>
+					{/if}
+				</div>
+				<div class="button-container">
+					<button
+						class="download-button"
+						class:installed={$installationStatus[mod.title]}
+						disabled={$installationStatus[mod.title] ||
+							$loadingStates[mod.title]}
+						onclick={() => installMod(mod)}
+					>
+						{#if $loadingStates[mod.title]}
+							<div class="spinner"></div>
+						{:else}
+							<Download size={18} />
+							{$installationStatus[mod.title]
+								? "Installed"
+								: "Download"}
 						{/if}
-					</div>
-					{#if mod.title.toLowerCase() === "talisman" && !$installationStatus[mod.title]}
-						<div class="version-selector">
-							{#if loadingVersions}
-								<div class="loading-text">
-									Loading versions...
-								</div>
-							{:else if talismanVersions.length === 0}
-								<div class="loading-text">
-									No versions available
-								</div>
-							{:else}
-								<select
-									bind:value={selectedVersion}
-									disabled={$loadingStates[mod.title]}
-								>
-									<option value="newest" selected
-										>latest (could be unstable)</option
-									>
-									{#each talismanVersions as version}
-										<option value={version}
-											>{version}</option
-										>
-									{/each}
-								</select>
-							{/if}
-						</div>
-					{/if}
-					{#if mod.title.toLowerCase() === "steamodded" && !$installationStatus[mod.title]}
-						<div class="version-selector">
-							{#if loadingVersions}
-								<div class="loading-text">
-									Loading versions...
-								</div>
-							{:else if steamoddedVersions.length === 0}
-								<div class="loading-text">
-									No versions available
-								</div>
-							{:else}
-								<select
-									bind:value={selectedVersion}
-									disabled={$loadingStates[mod.title]}
-								>
-									<option value="newest" selected
-										>latest (could be unstable)</option
-									>
-									{#each steamoddedVersions as version}
-										<option value={version}
-											>{version}</option
-										>
-									{/each}
-								</select>
-							{/if}
-						</div>
-					{/if}
-					<div class="mod-stats">
-						<span><Clock size={16} /> {mod.lastUpdated}</span>
-						<span><User size={16} /> {mod.publisher}</span>
-					</div>
-					{#if mod.repo}
+					</button>
+					{#if $installationStatus[mod.title]}
 						<button
-							onclick={() => open(mod.repo)}
-							class="repo-button"
+							class="delete-button"
+							title="Remove Mod"
+							onclick={() => uninstallMod(mod)}
 						>
-							<Github size={16} /> Repository
+							<Trash2 size={18} />
 						</button>
 					{/if}
 				</div>
-				<div class="right-column">
-					<div
-						class="description"
-						role="button"
-						tabindex="0"
-						onclick={handleMarkdownClick}
-						onkeydown={(e) => {
-							if (e.key === "Enter" || e.key === " ") {
-								handleMarkdownClick(e);
-							}
-						}}
-					>
-						{@html renderedDescription}
+				{#if mod.title.toLowerCase() === "talisman" && !$installationStatus[mod.title]}
+					<div class="version-selector">
+						{#if loadingVersions}
+							<div class="loading-text">Loading versions...</div>
+						{:else if talismanVersions.length === 0}
+							<div class="loading-text">
+								No versions available
+							</div>
+						{:else}
+							<select
+								bind:value={selectedVersion}
+								disabled={$loadingStates[mod.title]}
+							>
+								<option value="newest" selected
+									>latest (could be unstable)</option
+								>
+								{#each talismanVersions as version}
+									<option value={version}>{version}</option>
+								{/each}
+							</select>
+						{/if}
 					</div>
+				{/if}
+				{#if mod.title.toLowerCase() === "steamodded" && !$installationStatus[mod.title]}
+					<div class="version-selector">
+						{#if loadingVersions}
+							<div class="loading-text">Loading versions...</div>
+						{:else if steamoddedVersions.length === 0}
+							<div class="loading-text">
+								No versions available
+							</div>
+						{:else}
+							<select
+								bind:value={selectedVersion}
+								disabled={$loadingStates[mod.title]}
+							>
+								<option value="newest" selected
+									>latest (could be unstable)</option
+								>
+								{#each steamoddedVersions as version}
+									<option value={version}>{version}</option>
+								{/each}
+							</select>
+						{/if}
+					</div>
+				{/if}
+				<div class="mod-stats">
+					<!-- <span><Clock size={16} /> {mod.lastUpdated}</span> -->
+					<span><User size={16} /> {mod.publisher}</span>
+				</div>
+				{#if mod.repo}
+					<button onclick={() => open(mod.repo)} class="repo-button">
+						<Github size={16} /> Repository
+					</button>
+				{/if}
+			</div>
+			<div class="right-column">
+				<div
+					class="description"
+					role="button"
+					tabindex="0"
+					onclick={handleMarkdownClick}
+					onkeydown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							handleMarkdownClick(e);
+						}
+					}}
+				>
+					{@html renderedDescription}
 				</div>
 			</div>
 		</div>
 	</div>
-{/if}
+</div>
 
 <style>
 	:global(.description > p > img) {
@@ -669,6 +676,10 @@
 		color: #f4eee0;
 	}
 
+	:global(.description > p > img) {
+		width: 100%;
+	}
+
 	.description {
 		font-size: 1.2rem;
 		line-height: 1;
@@ -677,7 +688,67 @@
 		padding: 1.25rem;
 		border-radius: 6px;
 		width: 50rem;
-		/* height: 21.5rem; */
+		line-height: 1.5;
+	}
+
+	/* Improved inline code styling */
+	.description :global(code) {
+		background: rgba(50, 50, 50, 0.7);
+		color: #e6e1cf;
+		padding: 0.2em 0.4em;
+		border-radius: 3px;
+		font-family: "Consolas", "Monaco", "Menlo", monospace;
+		font-size: 0.75em;
+	}
+
+	/* Improved code block styling */
+	.description :global(pre) {
+		background: rgba(40, 40, 40, 0.8);
+		padding: 1em;
+		border-radius: 6px;
+		overflow-x: auto;
+		margin: 1em 0;
+		border: 1px solid rgba(100, 100, 100, 0.3);
+	}
+
+	/* Style code within pre blocks differently than inline code */
+	.description :global(pre code) {
+		background: transparent;
+		padding: 0;
+		color: #f4eee0;
+		display: block;
+		line-height: 1.5;
+		white-space: pre;
+	}
+
+	/* Add syntax highlighting colors */
+	.description :global(.token.keyword),
+	.description :global(.token.operator) {
+		color: #ff7b72;
+	}
+
+	.description :global(.token.string),
+	.description :global(.token.char) {
+		color: #a5d6ff;
+	}
+
+	.description :global(.token.function),
+	.description :global(.token.method) {
+		color: #d2a8ff;
+	}
+
+	.description :global(.token.number) {
+		color: #f8c555;
+	}
+
+	.description :global(.token.comment) {
+		color: #8b949e;
+		font-style: italic;
+	}
+
+	.description :global(.token.boolean),
+	.description :global(.token.constant) {
+		color: #79c0ff;
 	}
 
 	.back-button {
@@ -725,21 +796,6 @@
 		margin-bottom: 0.5em;
 	}
 
-	.description :global(code) {
-		background: rgba(244, 238, 224, 0.1);
-		padding: 0.2em 0.4em;
-		border-radius: 3px;
-		font-family: monospace;
-	}
-
-	.description :global(pre) {
-		background: rgba(244, 238, 224, 0.1);
-		padding: 1em;
-		border-radius: 6px;
-		overflow-x: auto;
-		margin: 1em 0;
-	}
-
 	.description :global(a) {
 		color: #56a786;
 		text-decoration: none;
@@ -771,9 +827,11 @@
 	.image-container img {
 		cursor: default;
 	}
-	.image-container .clickable {
-		cursor: pointer;
-	}
+
+	/* .image-container .clickable { */
+	/* 	cursor: pointer; */
+	/* } */
+
 	@media (max-width: 1160px) {
 		.content-grid {
 			grid-template-columns: 1fr;

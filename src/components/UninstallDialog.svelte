@@ -3,25 +3,43 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { uninstallDialogStore } from "../stores/modStore";
 
-	// Use props for events and store
-	const { onUninstalled, onError } = $props<{
-		onUninstalled?: (event: {
-			detail: { modName: string; success: boolean; action: string };
-		}) => void;
-		onError?: (event: { detail: unknown }) => void;
-	}>();
+	// Component props for callbacks
+	export let onUninstalled:
+		| ((event: {
+				detail: { modName: string; success: boolean; action: string };
+		  }) => void)
+		| undefined = undefined;
 
-	// Reactive store access
-	const isCoreMod = $derived(
-		$uninstallDialogStore.modName?.toLowerCase() === "steamodded" ||
-			$uninstallDialogStore.modName?.toLowerCase() === "talisman",
-	);
+	export let onError: ((event: { detail: unknown }) => void) | undefined =
+		undefined;
+
+	// Expose component state as props - but also subscribe to the store
+	export let show = false;
+	export let modName = "";
+	export let modPath = "";
+	export let dependents: string[] = [];
+
+	// Subscribe to the store changes
+	import { onMount } from "svelte";
+
+	onMount(() => {
+		const unsubscribe = uninstallDialogStore.subscribe((state) => {
+			// If the store says to show, update our local props
+			if (state.show) {
+				show = state.show;
+				modName = state.modName;
+				modPath = state.modPath;
+				dependents = state.dependents;
+			}
+		});
+
+		return unsubscribe;
+	});
 
 	let action: "cancel" | "force" | "cascade" | null = null;
 
 	async function handleUninstall() {
 		try {
-			const { modName, modPath } = $uninstallDialogStore;
 			let success = false;
 
 			if (action === "cascade") {
@@ -50,29 +68,34 @@
 					},
 				});
 			}
-		} catch (e) {
-			onError?.({ detail: e });
-		} finally {
+
+			// Close the dialog
+			show = false;
+			// Also update the store
 			uninstallDialogStore.update((s) => ({ ...s, show: false }));
+		} catch (e) {
+			console.error("Uninstall error:", e);
+			onError?.({ detail: e });
 		}
 	}
 
 	function closeDialog() {
+		show = false;
 		uninstallDialogStore.update((s) => ({ ...s, show: false }));
 	}
 </script>
 
-{#if $uninstallDialogStore.show && isCoreMod}
+{#if show}
 	<div class="dialog-overlay" transition:fade={{ duration: 100 }}>
 		<div class="dialog-content" transition:scale={{ duration: 200 }}>
-			<h2>Uninstall {$uninstallDialogStore.modName}?</h2>
+			<h2>Uninstall {modName}?</h2>
 
-			{#if $uninstallDialogStore.dependents.length > 0}
+			{#if dependents.length > 0}
 				<div class="dependency-list">
-					<h3>{$uninstallDialogStore.modName} is required for:</h3>
+					<h3>{modName} is required for:</h3>
 					<div class="scroll-container">
 						<ul>
-							{#each $uninstallDialogStore.dependents as dependent}
+							{#each dependents as dependent}
 								<li>{dependent}</li>
 							{/each}
 						</ul>
@@ -87,8 +110,7 @@
 							handleUninstall();
 						}}
 					>
-						Uninstall All ({$uninstallDialogStore.dependents
-							.length})
+						Uninstall All ({dependents.length})
 					</button>
 					<button
 						class="force-button"

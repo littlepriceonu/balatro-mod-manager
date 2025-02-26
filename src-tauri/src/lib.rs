@@ -1,9 +1,21 @@
+mod github_repo;
+
+use base64::{engine::general_purpose::STANDARD, Engine as _};
+use serde::{Deserialize, Serialize};
+use tauri::Manager;
+
+// use tauri::WebviewUrl;
+// use tauri::WebviewWindowBuilder;
+// use std::collections::HashMap;
+//
 use std::collections::HashSet;
+use std::fs::File;
 use std::panic;
 use std::path::PathBuf;
+use std::process::Command;
 use std::sync::Mutex;
-use tauri::WebviewUrl;
-use tauri::WebviewWindowBuilder;
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 use bmm_lib::balamod::find_balatros;
 use bmm_lib::cache;
@@ -15,20 +27,28 @@ use bmm_lib::finder::is_balatro_running;
 use bmm_lib::finder::is_steam_running;
 use bmm_lib::lovely;
 use bmm_lib::smods_installer::{ModInstaller, ModType};
-use std::time::SystemTime;
-use std::time::UNIX_EPOCH;
-
-use std::process::Command;
-
-use tauri::Manager;
 
 fn map_error<T>(result: Result<T, AppError>) -> Result<T, String> {
     result.map_err(|e| e.to_string())
 }
 
-// Create a state s;tructure to hold the database
+// Create a state structure to hold the database
 struct AppState {
     db: Mutex<Database>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ModMeta {
+    #[serde(rename = "requires-steamodded")]
+    pub requires_steamodded: bool,
+    #[serde(rename = "requires-talisman")]
+    pub requires_talisman: bool,
+    pub categories: Vec<String>,
+    pub author: String,
+    pub repo: String,
+    pub title: String,
+    #[serde(rename = "downloadURL")]
+    pub download_url: Option<String>,
 }
 
 #[tauri::command]
@@ -44,6 +64,158 @@ async fn check_balatro_running() -> bool {
 #[tauri::command]
 async fn save_versions_cache(mod_type: String, versions: Vec<String>) -> Result<(), String> {
     map_error(cache::save_versions_cache(&mod_type, &versions))
+}
+
+#[tauri::command]
+async fn get_repo_path() -> Result<String, String> {
+    let config_dir = dirs::config_dir()
+        .ok_or_else(|| AppError::DirNotFound(PathBuf::from("config directory")).to_string())?;
+    let repo_path = config_dir.join("Balatro").join("mod_index");
+    Ok(repo_path.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+async fn clone_repo(url: &str, path: &str) -> Result<(), String> {
+    github_repo::clone_repository(url, path).await
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ModCacheInfo {
+    pub path: String,
+    pub last_commit: i64,
+}
+
+#[allow(non_snake_case)]
+#[tauri::command]
+async fn get_mod_thumbnail(modPath: String) -> Result<Option<String>, String> {
+    let config_dir = dirs::config_dir()
+        .ok_or_else(|| AppError::DirNotFound(PathBuf::from("config directory")).to_string())?;
+
+    let full_path = config_dir
+        .join("Balatro")
+        .join("mod_index")
+        .join("mods")
+        .join(modPath)
+        .join("thumbnail.jpg");
+
+    // Read the image file
+    let image_data = match std::fs::read(&full_path) {
+        Ok(data) => data,
+        Err(_) => {
+            return Ok(None);
+        }
+    };
+
+    // Convert to base64
+    let base64 = STANDARD.encode(image_data);
+    Ok(Some(format!("data:image/jpeg;base64,{}", base64)))
+}
+
+// #[allow(non_snake_case)]
+// #[tauri::command]
+// async fn get_mod_timestamps(repoPath: String) -> Result<HashMap<String, i64>, String> {
+//     github_repo::get_mod_timestamps(&repoPath).await
+// }
+
+#[tauri::command]
+async fn pull_repo(path: &str) -> Result<(), String> {
+    // Check if directory exists
+    let path_buf = PathBuf::from(path);
+    if !path_buf.exists() {
+        return Err(format!("Directory '{}' does not exist", path));
+    }
+
+    // Check if it's a repository
+    if !github_repo::is_repository_directory(path) {
+        // Auto-clone if it doesn't look like a repository
+        let repo_url = "https://github.com/skyline69/balatro-mod-index"; // Default repository URL
+        return github_repo::clone_repository(repo_url, path).await;
+    }
+
+    // Proceed with pull if it's a valid repository
+    github_repo::pull_repository(path).await
+}
+
+#[tauri::command]
+async fn list_directories(path: &str) -> Result<Vec<String>, String> {
+    let dir = PathBuf::from(path);
+    let entries = std::fs::read_dir(dir).map_err(|e| {
+        AppError::FileRead {
+            path: PathBuf::from(path),
+            source: e.to_string(),
+        }
+        .to_string()
+    })?;
+
+    let mut dirs = Vec::new();
+    for entry in entries {
+        let entry = entry.map_err(|e| {
+            AppError::FileRead {
+                path: PathBuf::from(path),
+                source: e.to_string(),
+            }
+            .to_string()
+        })?;
+
+        if let Ok(file_type) = entry.file_type() {
+            if file_type.is_dir() {
+                if let Some(name) = entry.file_name().to_str() {
+                    dirs.push(name.to_string());
+                }
+            }
+        }
+    }
+    Ok(dirs)
+}
+
+#[tauri::command]
+async fn read_json_file(path: &str) -> Result<ModMeta, String> {
+    let path = PathBuf::from(path);
+    let file = File::open(&path).map_err(|e| {
+        AppError::FileRead {
+            path: path.clone(),
+            source: e.to_string(),
+        }
+        .to_string()
+    })?;
+
+    serde_json::from_reader(file).map_err(|e| {
+        AppError::JsonParse {
+            path,
+            source: e.to_string(),
+        }
+        .to_string()
+    })
+}
+
+#[tauri::command]
+async fn read_text_file(path: &str) -> Result<String, String> {
+    let path = PathBuf::from(path);
+    std::fs::read_to_string(&path).map_err(|e| {
+        AppError::FileRead {
+            path,
+            source: e.to_string(),
+        }
+        .to_string()
+    })
+}
+
+#[tauri::command]
+async fn get_last_fetched(state: tauri::State<'_, AppState>) -> Result<u64, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_last_fetched().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn update_last_fetched(state: tauri::State<'_, AppState>) -> Result<(), String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.set_last_fetched(
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
+    )
+    .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -267,18 +439,16 @@ async fn launch_balatro(state: tauri::State<'_, AppState>) -> Result<(), String>
 
     #[cfg(target_os = "windows")]
     {
-        // Paths for the executable and the version DLL.
+        // Paths for the executable
         let exe_path = path.join("Balatro.exe");
         let dll_path = path.join("version.dll");
 
-        // At launch, if a version.dll doesn't exist in the game directory,create it.
+        // If version.dll doesn't exist, download it
         if !dll_path.exists() {
-            // Write the embedded version.dll (replace lovely::EMBEDDED_DLL with your DLL's data) to the game folder.
-            std::fs::write(&dll_path, lovely::EMBEDDED_DLL)
-                .map_err(|e| format!("Failed to write version.dll: {}", e))?;
-            log::debug!("Written version.dll to {}", dll_path.display());
+            lovely::ensure_version_dll_exists(&path).await?;
         }
-        // Launch the game normally.
+
+        // Launch the game
         if lovely_console_enabled {
             Command::new(&exe_path)
                 .current_dir(&path)
@@ -570,7 +740,10 @@ async fn get_background_state(state: tauri::State<'_, AppState>) -> Result<bool,
 }
 
 #[tauri::command]
-async fn set_background_state(state: tauri::State<'_, AppState>, enabled: bool) -> Result<(), String> {
+async fn set_background_state(
+    state: tauri::State<'_, AppState>,
+    enabled: bool,
+) -> Result<(), String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     map_error(db.set_background_enabled(enabled))
 }
@@ -587,6 +760,12 @@ async fn verify_path_exists(path: String) -> bool {
 }
 
 #[tauri::command]
+async fn path_exists(path: String) -> Result<bool, String> {
+    let path = PathBuf::from(path);
+    Ok(path.exists())
+}
+
+#[tauri::command]
 async fn check_custom_balatro(
     state: tauri::State<'_, AppState>,
     path: String,
@@ -600,26 +779,6 @@ async fn check_custom_balatro(
     }
 
     Ok(is_valid)
-}
-
-#[tauri::command]
-async fn open_image_popup(app: tauri::AppHandle, image_url: String, title: String) {
-    let _popup = match WebviewWindowBuilder::new(
-        &app,
-        "image_popup",
-        WebviewUrl::App(format!("image-popup.html?image={}", image_url).into()),
-    )
-    .title(title)
-    .inner_size(800.0, 600.0)
-    .center()
-    .build()
-    {
-        Ok(popup) => popup,
-        Err(e) => {
-            log::error!("Failed to open image popup: {}", e);
-            return;
-        }
-    };
 }
 
 // #[tauri::command]
@@ -639,9 +798,6 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
-            // Get app handle first
-            // let app_handle = app.handle();
-
             // Initialize database with error handling
             let db = map_error(Database::new())?;
 
@@ -673,7 +829,6 @@ pub fn run() {
             launch_balatro,
             check_steam_running,
             check_balatro_running,
-            open_image_popup,
             get_installed_mods_from_db,
             install_mod,
             add_installed_mod,
@@ -683,6 +838,7 @@ pub fn run() {
             install_talisman_version,
             get_talisman_versions,
             verify_path_exists,
+            path_exists,
             check_mod_installation,
             refresh_mods_folder,
             save_mods_cache,
@@ -698,9 +854,20 @@ pub fn run() {
             get_dependents,
             reindex_mods,
             get_background_state,
-            set_background_state
+            set_background_state,
+            get_last_fetched,
+            update_last_fetched,
+            get_repo_path,
+            clone_repo,
+            pull_repo,
+            list_directories,
+            read_json_file,
+            read_text_file,
+            // get_mod_timestamps,
+            get_mod_thumbnail,
         ])
         .run(tauri::generate_context!());
+
     if let Err(e) = result {
         log::error!("Failed to run application: {}", e);
         std::process::exit(1);

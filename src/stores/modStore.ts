@@ -4,15 +4,18 @@ export interface Mod {
 	title: string;
 	description: string;
 	image: string;
-	lastUpdated: string;
+	// lastUpdated: string;
 	categories: Category[];
-	colors: { color1: string; color2: string };
-	installed: boolean;
+	colors: {
+		color1: string;
+		color2: string;
+	};
 	requires_steamodded: boolean;
 	requires_talisman: boolean;
 	publisher: string;
 	repo: string;
 	downloadURL: string;
+	installed: boolean;
 }
 
 export enum SortOption {
@@ -32,6 +35,7 @@ export interface UninstallDialogState {
 	modPath: string;
 	dependents: string[];
 }
+
 
 export const uninstallDialogStore = writable<UninstallDialogState>({
 	show: false,

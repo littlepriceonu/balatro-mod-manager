@@ -26,13 +26,14 @@ pub enum AppError {
     },
     FileNotFound {
         path: PathBuf,
-        source: String
+        source: String,
     },
     DirCreate {
         path: PathBuf,
         source: String,
     },
     DirNotFound(PathBuf),
+    PathConversionError,
 
     // System errors
     SystemTime(String),
@@ -55,6 +56,7 @@ pub enum AppError {
         mod_name: String,
         version: String,
     },
+    GitOperation(String),
 
     // Network/API
     NetworkRequest {
@@ -91,6 +93,10 @@ pub enum AppError {
         format: String,
         source: String,
     },
+    JsonParse {
+        path: PathBuf,
+        source: String,
+    },
 
     // Network
     Network(String),
@@ -98,6 +104,7 @@ pub enum AppError {
     // Miscellaneous
     Unknown(String),
 }
+// │   │   required for `Result<Vec<Mod>, AppError>` to implement `FromResidual<Result<Infallible, ParseBoolError>>` rustc (E0277) [125, 68]
 
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -128,6 +135,12 @@ impl fmt::Display for AppError {
             // Handle all variants similarly
             _ => write!(f, "{:?}", self),
         }
+    }
+}
+
+impl From<std::convert::Infallible> for AppError {
+    fn from(_: std::convert::Infallible) -> Self {
+        AppError::Unknown("Infallible error occurred".to_string())
     }
 }
 
