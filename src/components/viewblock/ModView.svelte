@@ -15,6 +15,7 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { cachedVersions } from "../../stores/modStore";
 	import { modsStore } from "../../stores/modStore";
+	import { untrack } from "svelte";
 
 	const VERSION_CACHE_DURATION = 60 * 60 * 1000;
 	const { mod, onCheckDependencies } = $props<{
@@ -31,20 +32,6 @@
 			handleClose();
 		}
 	}
-	// async function openImagePopup() {
-	// 	console.log("Opening popup with image:", {
-	// 		imageType: typeof mod.image,
-	// 		imageLength: mod.image.length,
-	// 		imagePreview: mod.image.substring(0, 100) + "...",
-	// 	});
-	//
-	// 	if (!isDefaultCover(mod.image)) {
-	// 		await invoke("open_image_popup", {
-	// 			imageUrl: mod.image,
-	// 			title: mod.title,
-	// 		});
-	// 	}
-	// }
 
 	let installedMods: InstalledMod[] = [];
 	let steamoddedVersions = $state<string[]>([]);
@@ -55,81 +42,9 @@
 
 	let versionLoadStarted = false;
 	let prevModTitle = "";
+	let hasCheckedInstallation = false;
 
-	// FIX: Currently very laggy, after clicked on mentioned mod
-	// FIXME: (Very slow) Maybe create this function in Rust?
-	function isInternalModLink(url: string): {
-		isMod: boolean;
-		modName: string;
-	} {
-		// Skip file-specific links (links to .txt, .lua, etc. files or specific paths)
-		if (
-			url.match(/\.(txt|lua|json|md|png|jpg|jpeg|gif|mp3|ogg|wav)$/) ||
-			url.includes("/blob/") ||
-			url.includes("/tree/")
-		) {
-			return { isMod: false, modName: "" };
-		}
-
-		// Common patterns for mod repository links
-		const githubModPattern1 = /github\.com\/[^\/]+\/([^\/]+)$/;
-		const githubModPattern2 =
-			/github\.com\/[^\/]+\/([^\/]+)(\/|\/tree\/main|\/tree\/master)?$/;
-
-		// Check if URL matches any pattern
-		let match =
-			url.match(githubModPattern1) || url.match(githubModPattern2);
-
-		if (match && match[1]) {
-			// Repository name from URL (will have dashes instead of spaces)
-			const repoName = match[1].toLowerCase();
-
-			// Get mods from the store
-			let modsArray: Mod[] = [];
-			modsStore.subscribe((m) => (modsArray = m))();
-
-			// Try several matching strategies
-			const foundMod = modsArray.find((mod) => {
-				// Direct match on title (case insensitive)
-				if (mod.title.toLowerCase() === repoName) {
-					return true;
-				}
-
-				// Match on repo URL
-				if (mod.repo && mod.repo.toLowerCase().includes(repoName)) {
-					return true;
-				}
-
-				// Match title with spaces replaced by dashes or underscores
-				const titleDashes = mod.title
-					.toLowerCase()
-					.replace(/\s+/g, "-");
-				const titleUnderscores = mod.title
-					.toLowerCase()
-					.replace(/\s+/g, "_");
-
-				if (repoName === titleDashes || repoName === titleUnderscores) {
-					return true;
-				}
-
-				// Match title with spaces removed
-				const titleNoSpaces = mod.title
-					.toLowerCase()
-					.replace(/\s+/g, "");
-				if (repoName === titleNoSpaces) {
-					return true;
-				}
-
-				return false;
-			});
-
-			if (foundMod) {
-				return { isMod: true, modName: foundMod.title };
-			}
-		}
-
-		return { isMod: false, modName: "" };
-	}
+	const linkCache = new Map();
 
 	async function loadSteamoddedVersions() {
 		if (loadingVersions) return;
@@ -178,6 +93,7 @@
 			loadingVersions = false;
 		}
 	}
+
 	async function loadTalismanVersions() {
 		if (loadingVersions) return;
 		try {
@@ -221,6 +137,7 @@
 			loadingVersions = false;
 		}
 	}
+
 	const getAllInstalledMods = async () => {
 		try {
 			const installed: InstalledMod[] = await invoke(
@@ -416,72 +333,143 @@
 		}
 	}
 
-	function processInternalModLinks() {
-		setTimeout(() => {
+	async function processInternalModLinks() {
+		setTimeout(async () => {
 			const descriptionElement = document.querySelector(".description");
 			if (!descriptionElement) return;
 
 			const links = descriptionElement.querySelectorAll("a");
 
-			links.forEach((link) => {
+			// Get mods array for the Rust function
+			let modsArray: Mod[] = [];
+			modsStore.subscribe((m) => (modsArray = m))();
+
+			// Collect all results first
+			const results = [];
+			for (const link of links) {
 				if (link.href.startsWith("http")) {
-					const { isMod, modName } = isInternalModLink(link.href);
-					if (isMod) {
-						link.classList.add("internal-mod-link");
-						link.setAttribute("title", "Opens in Mod Manager");
-						link.setAttribute("data-internal-mod", modName);
+					let result: { is_mod: boolean; mod_name: string };
 
-						// Add direct click handler to each internal link
-						link.onclick = (e) => {
-							e.preventDefault();
-							e.stopPropagation();
-
-							let modsArray: Mod[] = [];
-							modsStore.subscribe((m) => (modsArray = m))();
-
-							const targetMod = modsArray.find(
-								(m) => m.title === modName,
-							);
-							if (targetMod) {
-								currentModView.set(targetMod);
-							}
-
-							return false; // Extra prevention of default behavior
-						};
+					if (linkCache.has(link.href)) {
+						result = linkCache.get(link.href);
+					} else {
+						result = await invoke("is_internal_mod_link", {
+							url: link.href,
+							modsArray: modsArray,
+						});
+						linkCache.set(link.href, result);
 					}
+
+					results.push({ link, result });
 				}
-			});
+			}
+
+			// Then apply all DOM changes at once
+			for (const { link, result } of results) {
+				if (result.is_mod) {
+					link.classList.add("internal-mod-link");
+					link.setAttribute("title", "Opens in Mod Manager");
+					link.setAttribute("data-internal-mod", result.mod_name);
+
+					// Add direct click handler to each internal link
+					link.onclick = (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+
+						let modsArray: Mod[] = [];
+						modsStore.subscribe((m) => (modsArray = m))();
+
+						const targetMod = modsArray.find(
+							(m) => m.title === result.mod_name,
+						);
+						if (targetMod) {
+							currentModView.set(targetMod);
+						}
+
+						return false;
+					};
+				}
+			}
 		}, 0);
 	}
 
 	const isModInstalled = async (mod: Mod) => {
-		await getAllInstalledMods();
+		if (!mod) return false;
+
 		const status = installedMods.some((m) => m.name === mod.title);
-		installationStatus.update((s) => ({ ...s, [mod.title]: status }));
+
+		// Update the store outside of the reactive context
+		setTimeout(() => {
+			installationStatus.update((s) => ({
+				...s,
+				[mod.title]: status,
+			}));
+		}, 0);
+
 		return status;
 	};
 
+	// This effect handles the description rendering
 	$effect(() => {
 		if (mod?.description) {
 			Promise.resolve(marked(mod.description)).then((result) => {
 				renderedDescription = result;
-				processInternalModLinks();
 			});
 		} else {
 			renderedDescription = "";
 		}
 	});
 
+	// Watch for changes to renderedDescription separately
+	$effect(() => {
+		if (renderedDescription) {
+			// Use setTimeout to move to next microtask
+			setTimeout(() => {
+				processInternalModLinks();
+			}, 0);
+		}
+	});
+
 	function handleClose() {
 		currentModView.set(null);
 	}
+
 	onMount(async () => {
 		window.addEventListener("auxclick", handleAuxClick);
-		if (mod) {
-			await getAllInstalledMods();
-			await isModInstalled(mod);
+
+		// Initial load of installed mods
+		await getAllInstalledMods();
+
+		// Check if the current mod is installed
+		if (mod && !hasCheckedInstallation) {
+			hasCheckedInstallation = true;
+			setTimeout(() => {
+				isModInstalled(mod);
+			}, 0);
 		}
 	});
+
+	// Handle mod changes from currentModView
+	$effect(() => {
+		const currentMod = untrack(() => $currentModView);
+
+		if (currentMod) {
+			// Check if this is a new mod
+			if (
+				!hasCheckedInstallation ||
+				(mod && mod.title !== currentMod.title)
+			) {
+				hasCheckedInstallation = true;
+
+				// Move installation check outside reactive context
+				setTimeout(() => {
+					isModInstalled(currentMod);
+				}, 0);
+			}
+		}
+	});
+
+	// Handle loading of version data for special mods
 	$effect(() => {
 		const currentModTitle = mod?.title?.toLowerCase();
 		if (
@@ -491,9 +479,13 @@
 		) {
 			prevModTitle = currentModTitle;
 			versionLoadStarted = true;
-			loadSteamoddedVersions().then(() => {
-				versionLoadStarted = false;
-			});
+
+			// Move version loading outside reactive context
+			setTimeout(() => {
+				loadSteamoddedVersions().then(() => {
+					versionLoadStarted = false;
+				});
+			}, 0);
 		} else if (
 			currentModTitle === "talisman" &&
 			currentModTitle !== prevModTitle &&
@@ -501,11 +493,16 @@
 		) {
 			prevModTitle = currentModTitle;
 			versionLoadStarted = true;
-			loadTalismanVersions().then(() => {
-				versionLoadStarted = false;
-			});
+
+			// Move version loading outside reactive context
+			setTimeout(() => {
+				loadTalismanVersions().then(() => {
+					versionLoadStarted = false;
+				});
+			}, 0);
 		}
 	});
+
 	onDestroy(async () => {
 		window.removeEventListener("auxclick", handleAuxClick);
 		cachedVersions.set({ steamodded: [], talisman: [] });

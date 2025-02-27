@@ -8,3 +8,4 @@ pub mod smods_installer;
 pub mod cache;
 pub mod errors;
 pub mod discord_rpc;
+pub mod helpers;
