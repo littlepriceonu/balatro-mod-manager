@@ -50,10 +50,17 @@
 		isMod: boolean;
 		modName: string;
 	} {
+		// Quickly check common non-mod paths first
+		if (!url || !url.includes("github.com")) {
+			return { isMod: false, modName: "" };
+		}
+
+		// Exclude specific paths that are not mod repositories
 		if (
 			url.match(/\.(txt|lua|json|md|png|jpg|jpeg|gif|mp3|ogg|wav)$/) ||
 			url.includes("/blob/") ||
 			url.includes("/tree/") ||
+			url.includes("/wiki") ||
 			url.includes("/actions") ||
 			url.includes("/issues") ||
 			url.includes("/pulls") ||
@@ -62,31 +69,33 @@
 			url.includes("/archive") ||
 			url.includes("/compare") ||
 			url.includes("/security") ||
-			url.includes("/projects") ||
-			url.includes("/wiki")
+			url.includes("/projects")
 		) {
 			return { isMod: false, modName: "" };
 		}
+
 		// Common patterns for mod links
-		const githubModPattern1 = /github\.com\/[^\/]+\/([^\/]+)$/;
+		const githubModPattern1 =
+			/github\.com\/([^\/]+)\/([^\/\?#]+)(?:$|\?|\#)/;
 		const githubModPattern2 =
-			/github\.com\/[^\/]+\/([^\/]+)(\/|\/tree\/|\/blob\/)/;
+			/github\.com\/([^\/]+)\/([^\/\?#]+)(?:\/|\/tree\/|\/blob\/)/;
 
 		// Check if URL matches any pattern
 		let match =
 			url.match(githubModPattern1) || url.match(githubModPattern2);
 
-		if (match && match[1]) {
-			// Repository name from URL (will have dashes instead of spaces)
-			const repoName = match[1].toLowerCase();
+		if (match && match[2]) {
+			// Repository name from URL
+			const repoName = match[2].toLowerCase();
 
-			// Get mods from the store
+			// Get mods from the store - avoid subscribers in functions that run during rendering
 			let modsArray: Mod[] = [];
-			modsStore.subscribe((m) => (modsArray = m))();
+			const unsubscribe = modsStore.subscribe((m) => (modsArray = m));
+			unsubscribe(); // Important: unsubscribe immediately to prevent memory leaks
 
-			// Try several matching strategies
+			// Find matching mod
 			const foundMod = modsArray.find((mod) => {
-				// Direct match on title (case insensitive)
+				// Direct match
 				if (mod.title.toLowerCase() === repoName) {
 					return true;
 				}
@@ -96,27 +105,22 @@
 					return true;
 				}
 
-				// Match title with spaces replaced by dashes or underscores
+				// Match with spaces replaced
 				const titleDashes = mod.title
 					.toLowerCase()
 					.replace(/\s+/g, "-");
 				const titleUnderscores = mod.title
 					.toLowerCase()
 					.replace(/\s+/g, "_");
-
-				if (repoName === titleDashes || repoName === titleUnderscores) {
-					return true;
-				}
-
-				// Match title with spaces removed
 				const titleNoSpaces = mod.title
 					.toLowerCase()
 					.replace(/\s+/g, "");
-				if (repoName === titleNoSpaces) {
-					return true;
-				}
 
-				return false;
+				return (
+					repoName === titleDashes ||
+					repoName === titleUnderscores ||
+					repoName === titleNoSpaces
+				);
 			});
 
 			if (foundMod) {
