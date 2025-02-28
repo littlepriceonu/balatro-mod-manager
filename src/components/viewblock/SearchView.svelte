@@ -462,6 +462,14 @@
 		bottom: 1rem;
 	}
 
+	.mod-info > p {
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		overflow: hidden;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+	}
+
 	.mod-info h3 {
 		color: #fdcf51;
 		font-size: 1.5rem;

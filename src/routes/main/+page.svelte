@@ -143,7 +143,7 @@
 
 	<div
 		class="content"
-		class:modal-open={!!$currentModView}
+		class:modal-open={!!$currentModView && currentSection == "mods"}
 		bind:this={contentElement}
 	>
 		{#if currentSection === "mods"}
@@ -184,7 +184,7 @@
 		{onError}
 	/>
 
-	<div class="version-text">v0.1.5</div>
+	<div class="version-text">v0.1.6</div>
 </div>
 
 <style>

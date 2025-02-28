@@ -43,7 +43,7 @@ Alternatively, if you would prefer to build Balatro Mod Manager yourself instead
 - [Rust](https://www.rust-lang.org/tools/install) (for the backend)
 - [Deno](https://deno.land/#installation) (for the frontend)
 - [Tauri CLI](https://tauri.app/v1/guides/getting-started/prerequisites#installing-the-tauri-cli)
-- [Make](https://www.gnu.org/software/make/) (for running make commands)
+- [Task](https://taskfile.dev/) (for running task commands)
 
 ## Automatic Installation
 ### For Windows
@@ -81,11 +81,11 @@ curl -sL https://raw.githubusercontent.com/skyline69/balatro-mod-manager/main/sc
 
 ### Development Mode
 
-To start the project in development mode, use the provided Makefile:
+To start the project in development mode, use the provided taskfile:
 
 1. Run the debug target:
     ```sh
-    make debug
+    task debug
     ```
 
 ### Production Mode
@@ -94,7 +94,7 @@ To build the project for production:
 
 1. Build the release target:
     ```sh
-    make release
+    task release
     ```
 
 
@@ -102,11 +102,11 @@ The built application will be located in the `src-tauri/target/release` director
 
 ## Cleaning the Build
 
-To clean the build files, use the provided Makefile:
+To clean the build files, use the provided taskfile:
 
 1. Run the clean target:
     ```sh
-    make clean
+    task clean
     ```
 
 > Font by Daniel Linssen
