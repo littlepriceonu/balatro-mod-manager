@@ -335,7 +335,7 @@
 	.search-container {
 		position: relative;
 		width: 80%;
-		padding: 1rem;
+		padding: 0 1rem;
 	}
 
 	::selection {
@@ -344,17 +344,21 @@
 	}
 
 	.search-bar {
-		margin-bottom: 2rem;
 		height: 3rem;
+		width: 100%;
+		position: absolute;
+		top: 1rem;
+		z-index: 100;
 	}
 
 	.search-bar form {
 		display: flex;
 		gap: 0.5rem;
+		width: 100%;
 	}
 
 	.search-input {
-		flex: 1;
+		width: 90%;
 		padding: 0.75rem;
 		border: 2px solid #f4eee0;
 		border-radius: 6px;
@@ -395,11 +399,12 @@
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 		gap: 1rem;
 		padding: 1rem 0;
+		padding-top: 5rem;
 	}
 
 	.results-scroll-container {
 		overflow-y: auto;
-		height: calc(100% - 5rem);
+		height: 100%;
 	}
 
 	.mod-card {

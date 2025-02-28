@@ -1013,7 +1013,7 @@
 	.sort-controls {
 		position: absolute;
 		/* top: 0.25rem; Increased from 2rem */
-		right: 1rem; /* Increased from 2.5rem */
+		right: 4rem; /* Increased from 2.5rem */
 		z-index: 1000;
 		margin: 0;
 		background: transparent;
@@ -1265,11 +1265,15 @@
 		}
 
 		.pagination-controls {
-			left: 17%;
+			left: 13.6rem;
 		}
 
 		.controls-container {
 			margin-bottom: 0.5rem;
+		}
+
+		.sort-controls {
+			right: 1rem;
 		}
 	}
 </style>
