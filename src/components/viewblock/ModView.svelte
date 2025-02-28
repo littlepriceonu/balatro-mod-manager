@@ -55,6 +55,14 @@
 			url.includes("/blob/") ||
 			url.includes("/tree/") ||
 			url.includes("/actions") ||
+			url.includes("/issues") ||
+			url.includes("/pulls") ||
+			url.includes("/commits") ||
+			url.includes("/releases") ||
+			url.includes("/archive") ||
+			url.includes("/compare") ||
+			url.includes("/security") ||
+			url.includes("/projects") ||
 			url.includes("/wiki")
 		) {
 			return { isMod: false, modName: "" };
