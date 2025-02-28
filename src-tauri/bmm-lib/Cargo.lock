@@ -262,7 +262,6 @@ dependencies = [
  "lazy_static",
  "libc",
  "libflate",
- "libloading 0.8.6",
  "libproc",
  "log",
  "mockito",

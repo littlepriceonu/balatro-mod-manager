@@ -41,7 +41,7 @@ sysinfo = "0.33.1"
 [target.'cfg(unix)'.dependencies]
 libproc = "0.14.10"
 home = "0.5.11"
-libloading = "0.8.6"
+# libloading = "0.8.6"
 
 [build-dependencies]
 dirs = "6.0.0"

@@ -54,6 +54,7 @@
 			url.match(/\.(txt|lua|json|md|png|jpg|jpeg|gif|mp3|ogg|wav)$/) ||
 			url.includes("/blob/") ||
 			url.includes("/tree/") ||
+			url.includes("/actions") ||
 			url.includes("/wiki")
 		) {
 			return { isMod: false, modName: "" };

@@ -32,7 +32,7 @@ fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 tauri-utils = "2.2.0"
 base64 = "0.22.1"
 reqwest = "0.12.12"
-chrono = "0.4.40"
+# chrono = "0.4.40"
 zip = "2.2.3"
 
 [dev-dependencies]
