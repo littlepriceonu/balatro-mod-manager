@@ -162,17 +162,35 @@
 	};
 
 	const isModInstalled = async (mod: Mod) => {
+		if (!mod) return false;
+
 		await getAllInstalledMods();
 		const status = installedMods.some((m) => m.name === mod.title);
-		installationStatus.update((s) => ({ ...s, [mod.title]: status }));
+
+		// Only update the store if the status has changed
+		const currentStatus = $installationStatus[mod.title];
+		if (currentStatus !== status) {
+			installationStatus.update((s) => ({ ...s, [mod.title]: status }));
+		}
+
 		return status;
 	};
 
 	$effect(() => {
-		if (mod) {
-			isModInstalled(mod);
+		// Only update local mod reference
+		const newMod = $currentModView;
+
+		// Only check installation if we have a new mod that's different from current
+		if (newMod && (!mod || newMod.title !== mod?.title)) {
+			mod = newMod;
+			// Move the installation check outside of the reactive context
+			setTimeout(() => {
+				isModInstalled(newMod);
+			}, 0);
+		} else if (newMod) {
+			// Just update the reference if it's the same mod
+			mod = newMod;
 		}
-		mod = $currentModView!;
 	});
 
 	onMount(() => {

@@ -730,12 +730,6 @@ async fn get_balatro_path(state: tauri::State<'_, AppState>) -> Result<Option<St
 }
 
 #[tauri::command]
-async fn is_internal_mod_link(url: &str, mods_array: Vec<Mod>) -> Result<bmm_lib::helpers::ModLinkResult, String> {
-    let result = bmm_lib::helpers::is_internal_mod_link(url, mods_array);
-    Ok(result)
-}
-
-#[tauri::command]
 async fn set_balatro_path(state: tauri::State<'_, AppState>, path: String) -> Result<(), String> {
     let db = match state.db.lock() {
         Ok(db) => db,
@@ -983,7 +977,6 @@ pub fn run() {
             set_discord_rpc_status,
             get_latest_steamodded_release,
             set_discord_rpc_status
-            is_internal_mod_link,
         ])
         .run(tauri::generate_context!());
 

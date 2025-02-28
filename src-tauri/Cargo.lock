@@ -509,7 +509,7 @@ dependencies = [
  "discord-rich-presence",
  "flate2",
  "home",
- "infer",
+ "infer 0.16.0",
  "lazy_static",
  "libc",
  "libflate",

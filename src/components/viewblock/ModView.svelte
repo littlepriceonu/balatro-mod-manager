@@ -46,6 +46,77 @@
 
 	const linkCache = new Map();
 
+	function isInternalModLink(url: string): {
+		isMod: boolean;
+		modName: string;
+	} {
+		if (
+			url.match(/\.(txt|lua|json|md|png|jpg|jpeg|gif|mp3|ogg|wav)$/) ||
+			url.includes("/blob/") ||
+			url.includes("/tree/")
+		) {
+			return { isMod: false, modName: "" };
+		}
+		// Common patterns for mod links
+		const githubModPattern1 = /github\.com\/[^\/]+\/([^\/]+)$/;
+		const githubModPattern2 =
+			/github\.com\/[^\/]+\/([^\/]+)(\/|\/tree\/|\/blob\/)/;
+
+		// Check if URL matches any pattern
+		let match =
+			url.match(githubModPattern1) || url.match(githubModPattern2);
+
+		if (match && match[1]) {
+			// Repository name from URL (will have dashes instead of spaces)
+			const repoName = match[1].toLowerCase();
+
+			// Get mods from the store
+			let modsArray: Mod[] = [];
+			modsStore.subscribe((m) => (modsArray = m))();
+
+			// Try several matching strategies
+			const foundMod = modsArray.find((mod) => {
+				// Direct match on title (case insensitive)
+				if (mod.title.toLowerCase() === repoName) {
+					return true;
+				}
+
+				// Match on repo URL
+				if (mod.repo && mod.repo.toLowerCase().includes(repoName)) {
+					return true;
+				}
+
+				// Match title with spaces replaced by dashes or underscores
+				const titleDashes = mod.title
+					.toLowerCase()
+					.replace(/\s+/g, "-");
+				const titleUnderscores = mod.title
+					.toLowerCase()
+					.replace(/\s+/g, "_");
+
+				if (repoName === titleDashes || repoName === titleUnderscores) {
+					return true;
+				}
+
+				// Match title with spaces removed
+				const titleNoSpaces = mod.title
+					.toLowerCase()
+					.replace(/\s+/g, "");
+				if (repoName === titleNoSpaces) {
+					return true;
+				}
+
+				return false;
+			});
+
+			if (foundMod) {
+				return { isMod: true, modName: foundMod.title };
+			}
+		}
+
+		return { isMod: false, modName: "" };
+	}
+
 	async function loadSteamoddedVersions() {
 		if (loadingVersions) return;
 		try {
@@ -334,60 +405,49 @@
 	}
 
 	async function processInternalModLinks() {
-		setTimeout(async () => {
+		setTimeout(() => {
 			const descriptionElement = document.querySelector(".description");
 			if (!descriptionElement) return;
 
 			const links = descriptionElement.querySelectorAll("a");
 
-			// Get mods array for the Rust function
-			let modsArray: Mod[] = [];
-			modsStore.subscribe((m) => (modsArray = m))();
-
-			// Collect all results first
-			const results = [];
+			// Process each link
 			for (const link of links) {
 				if (link.href.startsWith("http")) {
-					let result: { is_mod: boolean; mod_name: string };
+					let result;
 
 					if (linkCache.has(link.href)) {
 						result = linkCache.get(link.href);
 					} else {
-						result = await invoke("is_internal_mod_link", {
-							url: link.href,
-							modsArray: modsArray,
-						});
+						// Use the TypeScript implementation instead of invoking Rust
+						const { isMod, modName } = isInternalModLink(link.href);
+						result = { is_mod: isMod, mod_name: modName };
 						linkCache.set(link.href, result);
 					}
 
-					results.push({ link, result });
-				}
-			}
+					if (result.is_mod) {
+						link.classList.add("internal-mod-link");
+						link.setAttribute("title", "Opens in Mod Manager");
+						link.setAttribute("data-internal-mod", result.mod_name);
 
-			// Then apply all DOM changes at once
-			for (const { link, result } of results) {
-				if (result.is_mod) {
-					link.classList.add("internal-mod-link");
-					link.setAttribute("title", "Opens in Mod Manager");
-					link.setAttribute("data-internal-mod", result.mod_name);
+						// Add direct click handler to each internal link
+						link.onclick = (e) => {
+							e.preventDefault();
+							e.stopPropagation();
 
-					// Add direct click handler to each internal link
-					link.onclick = (e) => {
-						e.preventDefault();
-						e.stopPropagation();
+							let modsArray: Mod[] = [];
+							modsStore.subscribe((m) => (modsArray = m))();
 
-						let modsArray: Mod[] = [];
-						modsStore.subscribe((m) => (modsArray = m))();
+							const targetMod = modsArray.find(
+								(m) => m.title === result.mod_name,
+							);
+							if (targetMod) {
+								currentModView.set(targetMod);
+							}
 
-						const targetMod = modsArray.find(
-							(m) => m.title === result.mod_name,
-						);
-						if (targetMod) {
-							currentModView.set(targetMod);
-						}
-
-						return false;
-					};
+							return false;
+						};
+					}
 				}
 			}
 		}, 0);
