@@ -481,6 +481,7 @@
 		overflow: hidden;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
+		padding: 0 0.1rem;
 	}
 
 	.mod-info h3 {
