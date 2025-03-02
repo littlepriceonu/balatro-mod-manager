@@ -302,15 +302,6 @@
 		z-index: 100;
 	}
 
-	@keyframes spin {
-		from {
-			transform: rotate(0deg);
-		}
-		to {
-			transform: rotate(360deg);
-		}
-	}
-
 	.search-spinner {
 		display: block;
 		position: absolute;
@@ -393,10 +384,6 @@
 	}
 
 	@media (max-width: 1160px) {
-		.search-container {
-			width: 70%;
-		}
-
 		.results-container {
 			padding: 1rem;
 			padding-top: 5rem;
