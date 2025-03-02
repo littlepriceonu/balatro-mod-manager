@@ -48,7 +48,7 @@
 
 <div
     class="mod-card"
-    onclick={() => {openModView}}
+    onclick={openModView}
     onkeydown={(e) => e.key === "Enter" && openModView()}
     role="button"
     tabindex="0"
