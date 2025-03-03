@@ -20,7 +20,7 @@ serde = { version = "1.0.218", features = ["serde_derive"] }
 serde_json = "1.0.139"
 serde_repr = "0.1.19"
 tar = "0.4.44"
-tauri = "2.3.0"
+tauri = "2.3.1"
 tempfile = "3.17.1"
 tokio = { version = "1.43.0", features = ["full"] }
 zip = "2.2.3"
