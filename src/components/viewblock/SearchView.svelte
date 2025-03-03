@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Download, Trash2 } from "lucide-svelte";
 	import type { InstalledMod, Mod } from "../../stores/modStore";
 	import { onMount } from "svelte";
 	import {
@@ -176,20 +175,20 @@
 		return status;
 	};
 
+	let prevMod: Mod | null = null;
+
 	$effect(() => {
-		// Only update local mod reference
 		const newMod = $currentModView;
 
-		// Only check installation if we have a new mod that's different from current
-		if (newMod && (!mod || newMod.title !== mod?.title)) {
+		// Only proceed if newMod is different from the previous mod
+		if (newMod && (!prevMod || newMod.title !== prevMod.title)) {
+			prevMod = newMod;
 			mod = newMod;
+
 			// Move the installation check outside of the reactive context
 			setTimeout(() => {
 				isModInstalled(newMod);
 			}, 0);
-		} else if (newMod) {
-			// Just update the reference if it's the same mod
-			mod = newMod;
 		}
 	});
 
@@ -230,7 +229,7 @@
 	const handleSearch = debounce(() => {
 		if (!searchIndex || searchQuery.length < 2) {
 			searchResults = [];
-			showSpinner = false
+			showSpinner = false;
 			return;
 		}
 
@@ -250,7 +249,7 @@
 		}
 	}, 300);
 
-	let showSpinner = $state(false)
+	let showSpinner = $state(false);
 
 	function handleInput() {
 		showSpinner = true;
@@ -276,20 +275,32 @@
 
 		{#if showSpinner}
 			<!-- svelte-ignore element_invalid_self_closing_tag -->
-			<div transition:fade={{duration: 100}} class="search-spinner"/>
+			<div transition:fade={{ duration: 100 }} class="search-spinner" />
 		{/if}
 	</div>
 
 	<div class="results-scroll-container default-scrollbar">
 		<div class="results-container">
 			{#if isSearching}
-				<p transition:fade={{duration: 100}} class="resulting-text">Searching...</p>
+				<p transition:fade={{ duration: 100 }} class="resulting-text">
+					Searching...
+				</p>
 			{:else if searchResults.length === 0 && searchQuery.length >= 2}
-				<p transition:fade={{duration: 100}} class="resulting-text">No mods found matching "{searchQuery}"</p>
+				<p transition:fade={{ duration: 100 }} class="resulting-text">
+					No mods found matching "{searchQuery}"
+				</p>
 			{:else if searchResults.length > 0}
-				<div transition:fade={{duration: 100}} class="results-wrapper">
+				<div
+					transition:fade={{ duration: 100 }}
+					class="results-wrapper"
+				>
 					{#each searchResults as mod}
-						<ModCard {mod} oninstallclick={installMod} onuninstallclick={uninstallMod} onmodclick={handleModClick} />
+						<ModCard
+							{mod}
+							oninstallclick={installMod}
+							onuninstallclick={uninstallMod}
+							onmodclick={handleModClick}
+						/>
 					{/each}
 				</div>
 			{/if}
@@ -298,7 +309,6 @@
 </div>
 
 <style>
-
 	.search-container {
 		position: relative;
 		/* 192px being the width of the catagories + seperator */
@@ -316,7 +326,7 @@
 		/* accounting for the padding (2rem) & scroll container's scrollbar (0.625rem/10px)*/
 		width: calc(100% - 2.625rem);
 		position: absolute;
-		top: 1rem;	
+		top: 1rem;
 		z-index: 100;
 	}
 
