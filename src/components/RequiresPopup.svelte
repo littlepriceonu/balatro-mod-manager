@@ -83,8 +83,8 @@
 	}
 
 	.popup-content {
-		background: #393646;
-		border: 2px solid #f4eee0;
+		background: var(--dark-gray);
+		border: 2px solid var(--white);
 		border-radius: 12px;
 		padding: 2rem;
 		width: 500px;
@@ -105,7 +105,7 @@
 	}
 
 	.popup-body {
-		color: #f4eee0;
+		color: var(--white);
 		font-size: 1.2rem;
 	}
 
@@ -141,10 +141,10 @@
 
 	.cancel-button {
 		padding: 1rem 1.5rem;
-		background: #c14139;
-		color: #f4eee0;
+		background: var(--red);
+		color: var(--white);
 		border: none;
-		outline: #a13029 solid 2px;
+		outline: var(--red-2) solid 2px;
 		border-radius: 6px;
 		font-family: "M6X11", sans-serif;
 		font-size: 1.2rem;
@@ -153,7 +153,7 @@
 	}
 
 	.cancel-button:hover {
-		background: #d4524a;
+		background: var(--red-3);
 		transform: translateY(-2px);
 	}
 

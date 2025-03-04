@@ -48,8 +48,8 @@
 	}
 
 	.launch-button {
-		background: #00a2ff;
-		color: #f4eee0;
+		background: var(--blue);
+		color: var(--white);
 		font-family: "M6X11", sans-serif;
 		font-size: 3.2rem;
 		padding: 0.5rem 2.2rem;
@@ -67,7 +67,7 @@
 	}
 
 	.launch-button:hover {
-		background: #0088ff;
+		background: var(--blue-2);
 		transform: translateY(-2px);
 	}
 

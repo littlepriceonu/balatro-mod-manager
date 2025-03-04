@@ -8,7 +8,7 @@
 		body {
 			margin: 0;
 			padding: 0;
-			background: #393646;
+			background: var(--dark-gray);
 			display: flex;
 			justify-content: center;
 			align-items: center;

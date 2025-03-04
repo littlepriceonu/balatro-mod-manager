@@ -300,10 +300,10 @@
 		flex: 1;
 	}
 	.reindex-button {
-		background: #56a786;
-		color: #f4eee0;
+		background: var(--green);
+		color: var(--white);
 		border: none;
-		outline: #459373 solid 2px;
+		outline: var(--green-2) solid 2px;
 		border-radius: 4px;
 		padding: 0.75rem 1.5rem;
 		font-family: "M6X11", sans-serif;
@@ -322,7 +322,7 @@
 	.throbber {
 		width: 20px;
 		height: 20px;
-		border: 3px solid #f4eee0;
+		border: 3px solid var(--white);
 		border-radius: 50%;
 		border-top-color: transparent;
 		animation: spin 1s linear infinite;
@@ -347,7 +347,7 @@
 	}
 	.clear-cache-button {
 		background: #6d28d9;
-		color: #f4eee0;
+		color: var(--white);
 		border: none;
 		outline: #5b21b6 solid 2px;
 		border-radius: 4px;
@@ -370,7 +370,7 @@
 		transform: none;
 	}
 	.description {
-		color: #f4eee0;
+		color: var(--white);
 		font-size: 1.2rem;
 		margin-top: 0.5rem;
 		opacity: 0.9;
@@ -392,7 +392,7 @@
 		gap: 0.75rem;
 		margin-top: 1rem;
 		font-size: 1.2rem;
-		color: #f4eee0;
+		color: var(--white);
 	}
 	.label-text {
 		white-space: nowrap;
@@ -428,7 +428,7 @@
 		width: 24px;
 		left: 2px;
 		bottom: 2px;
-		background-color: #f4eee0;
+		background-color: var(--white);
 		/* do a gray outline */
 		outline: 2px solid #9e9a90;
 		transition: 0.3s;

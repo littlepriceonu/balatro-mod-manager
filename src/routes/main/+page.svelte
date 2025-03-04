@@ -202,7 +202,7 @@
 	}
 
 	h1 {
-		color: #f4eee0;
+		color: var(--white);
 		font-size: 3rem;
 		margin-bottom: 2rem;
 		font-family: "M6X11", sans-serif;
@@ -221,8 +221,8 @@
 
 	button {
 		background: transparent;
-		border: 2px solid #f4eee0;
-		color: #f4eee0;
+		border: 2px solid var(--white);
+		color: var(--white);
 		padding: 0.7rem 1.4rem;
 		border-radius: 8px;
 		font-family: "M6X11", sans-serif;
@@ -233,8 +233,8 @@
 
 	button:hover,
 	button.active {
-		background: #f4eee0;
-		color: #393646;
+		background: var(--white);
+		color: var(--dark-gray);
 	}
 
 	.content {
@@ -243,7 +243,7 @@
 		border-radius: 5px;
 		backdrop-filter: blur(10px);
 		margin-bottom: 2rem;
-		outline: 2px solid #f4eee0;
+		outline: 2px solid var(--white);
 		/* overflow-y: auto; Enable vertical scrolling */
 		overflow: hidden;
 		max-height: calc(100vh - 12rem);
@@ -269,7 +269,7 @@
 		position: fixed;
 		bottom: 1rem;
 		right: 1rem;
-		color: #f4eee0;
+		color: var(--white);
 		font-family: "M6X11", sans-serif;
 		text-shadow:
 			-1px -1px 0 #000,

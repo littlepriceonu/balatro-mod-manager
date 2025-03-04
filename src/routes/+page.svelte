@@ -202,7 +202,7 @@
 	}
 
 	h1 {
-		color: #f4eee0;
+		color: var(--white);
 		font-size: 3.5rem;
 		margin-bottom: 3rem;
 		font-family: "M6X11", sans-serif;
@@ -245,7 +245,7 @@
 		position: fixed;
 		bottom: 1rem;
 		right: 1rem;
-		color: #f4eee0;
+		color: var(--white);
 		font-size: 1rem;
 		opacity: 0.8;
 		font-family: "M6X11", sans-serif;

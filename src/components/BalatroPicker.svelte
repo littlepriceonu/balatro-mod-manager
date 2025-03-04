@@ -160,14 +160,14 @@
 <style>
 	:root {
 		/* Base Colors */
-		/* --color-dark: #459373; */
-		/* --color-medium: #56a786; */
+		/* --color-dark: --green-2; */
+		/* --color-medium: var(--green); */
 		/* --color-light: #74cca8; */
-		/* --color-cream: #f4eee0; */
+		/* --color-cream: var(--white); */
 		--color-dark: #3b41a8; /* Brighter base blue */
 		--color-medium: #4b52d1; /* Vibrant medium blue */
 		--color-light: #6166ff; /* Bright highlight blue */
-		--color-cream: #f4eee0; /* Original cream color */
+		--color-cream: var(--white); /* Original cream color */
 
 		--text-primary: var(--color-cream);
 		--text-secondary: var(--color-light);
@@ -252,7 +252,7 @@
 	.action-button:has(.throbber) {
 		width: 70px; /* Smaller width when showing throbber */
 		padding: 0.75rem;
-		background-color: #f4eee0;
+		background-color: var(--white);
 	}
 
 	.throbber {
@@ -353,7 +353,7 @@
 	}
 
 	.radio-text {
-		color: #f4eee0;
+		color: var(--white);
 		/* distance between 2 elements */
 		font-size: 1.4rem;
 	}

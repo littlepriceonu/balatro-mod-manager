@@ -136,7 +136,7 @@
 	}
 
 	input[type="text"]:hover:not(:disabled) {
-		border-color: #f4eee0;
+		border-color: var(--white);
 	}
 
 	input[type="text"]::placeholder {
@@ -182,7 +182,7 @@
 	.throbber {
 		width: 20px;
 		height: 20px;
-		border: 3px solid #f4eee0;
+		border: 3px solid var(--white);
 		border-radius: 50%;
 		border-top-color: transparent;
 		animation: spin 1s linear infinite;

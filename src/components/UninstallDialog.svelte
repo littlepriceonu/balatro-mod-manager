@@ -163,7 +163,7 @@
 	}
 
 	.dependency-list li {
-		color: #f4eee0;
+		color: var(--white);
 		margin-bottom: 0.25rem;
 	}
 
@@ -183,7 +183,7 @@
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: #f4eee0;
+			background: var(--white);
 			border: 2px solid rgba(193, 65, 57, 0.8);
 			border-radius: 15px;
 		}
@@ -204,8 +204,8 @@
 	}
 
 	.dialog-content {
-		background: #393646;
-		border: 2px solid #f4eee0;
+		background: var(--dark-gray);
+		border: 2px solid var(--white);
 		border-radius: 12px;
 		padding: 2rem;
 		width: 560px;
@@ -231,7 +231,7 @@
 	}
 
 	li {
-		color: #c14139;
+		color: var(--red);
 		padding: 0.5rem 0;
 		display: flex;
 		align-items: center;
@@ -264,9 +264,9 @@
 	}
 
 	.confirm-button {
-		background: #56a786; /* Green from your download button */
-		color: #f4eee0;
-		border: 2px solid #459373;
+		background: var(--green); /* Green from your download button */
+		color: var(--white);
+		border: 2px solid var(--green-2);
 	}
 
 	.confirm-button:hover {
@@ -275,9 +275,9 @@
 	}
 
 	.force-button {
-		background: #c14139; /* Red from delete button */
-		color: #f4eee0;
-		border: 2px solid #a13029;
+		background: var(--red);
+		color: var(--white);
+		border: 2px solid var(--red-2);
 	}
 
 	.force-button:hover {
@@ -286,8 +286,8 @@
 	}
 
 	.cancel-button {
-		background: #ea9600; /* Orange from categories button */
-		color: #f4eee0;
+		background: var(--yellow); /* Orange from categories button */
+		color: var(--white);
 		border: 2px solid #cc8400;
 	}
 

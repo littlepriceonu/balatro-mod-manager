@@ -526,7 +526,7 @@
 		right: 0;
 		width: 100%;
 		height: 100%;
-		/* background: linear-gradient(to bottom, #393646, #4a4458); */
+		/* background: linear-gradient(to bottom, --dark-gray, #4a4458); */
 		background: rgba(133, 35, 27, 0.8);
 		backdrop-filter: blur(20px);
 		z-index: 1000;
@@ -537,7 +537,7 @@
 	.mod-content {
 		max-width: 1000px;
 		padding: 3rem;
-		color: #f4eee0;
+		color: var(--white);
 		font-family: "M6X11", sans-serif;
 	}
 
@@ -597,8 +597,8 @@
 		justify-content: center;
 		gap: 0.5rem;
 		padding: 1rem;
-		background: #56a786;
-		color: #f4eee0;
+		background: var(--green);
+		color: var(--white);
 		border: none;
 		border-radius: 6px;
 		font-size: 1rem;
@@ -608,7 +608,7 @@
 	}
 
 	.download-button:hover:not(.installed) {
-		background: #63b897;
+		background: var(--green-3);
 		transform: translateY(-2px);
 	}
 
@@ -623,8 +623,8 @@
 
 	.delete-button {
 		padding: 0.75rem;
-		background: #c14139;
-		color: #f4eee0;
+		background: var(--red);
+		color: var(--white);
 		border: none;
 		border-radius: 6px;
 		cursor: pointer;
@@ -632,7 +632,7 @@
 	}
 
 	.delete-button:hover {
-		background: #d4524a;
+		background: var(--red-3);
 		transform: translateY(-2px);
 	}
 
@@ -652,7 +652,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		color: #f4eee0;
+		color: var(--white);
 	}
 
 	:global(.description > p > img) {
@@ -662,7 +662,7 @@
 	.description {
 		font-size: 1.2rem;
 		line-height: 1;
-		color: #f4eee0;
+		color: var(--white);
 		background: rgba(244, 238, 224, 0.05);
 		padding: 1.25rem;
 		border-radius: 6px;
@@ -694,7 +694,7 @@
 	.description :global(pre code) {
 		background: transparent;
 		padding: 0;
-		color: #f4eee0;
+		color: var(--white);
 		display: block;
 		line-height: 1.5;
 		white-space: pre;
@@ -739,7 +739,7 @@
 		gap: 0.5rem;
 		background: rgba(244, 238, 224, 0.1);
 		border: none;
-		color: #f4eee0;
+		color: var(--white);
 		padding: 0.5rem 1rem;
 		border-radius: 6px;
 		cursor: pointer;
@@ -758,7 +758,7 @@
 	.description :global(h3),
 	.description :global(h4) {
 		margin-bottom: 0.5em;
-		color: #f4eee0;
+		color: var(--white);
 	}
 
 	.description :global(p) {
@@ -776,7 +776,7 @@
 	}
 
 	.description :global(a) {
-		color: #56a786;
+		color: var(--green);
 		text-decoration: none;
 	}
 
@@ -785,7 +785,7 @@
 	}
 
 	.description :global(blockquote) {
-		border-left: 3px solid #56a786;
+		border-left: 3px solid var(--green);
 		margin: 1em 0;
 		padding-left: 1em;
 		color: rgba(244, 238, 224, 0.8);
@@ -838,7 +838,7 @@
 		/* width: 100%; */
 		padding: 0.75rem;
 		background: rgba(133, 35, 27, 0.8);
-		color: #f4eee0;
+		color: var(--white);
 		border: 1px solid rgba(193, 65, 57, 0.6);
 		border-radius: 6px;
 		font-family: "M6X11", sans-serif;
@@ -850,7 +850,7 @@
 		width: 100%;
 		padding: 0.75rem;
 		background: rgba(133, 35, 27, 0.8);
-		color: #f4eee0;
+		color: var(--white);
 		border: 1px solid rgba(193, 65, 57, 0.6);
 		border-radius: 6px;
 		font-family: "M6X11", sans-serif;
@@ -886,7 +886,7 @@
 		height: 3rem;
 		padding: 0.75rem 1.5rem;
 		background: #2b3137;
-		color: #f4eee0;
+		color: var(--white);
 		border: none;
 		outline: #1b2127 solid 2px;
 		border-radius: 4px;
@@ -905,12 +905,12 @@
 	}
 	.version-selector select option {
 		background: rgba(133, 35, 27, 0.9);
-		color: #f4eee0;
+		color: var(--white);
 		padding: 0.75rem;
 	}
 
 	.description :global(a) {
-		color: #56a786;
+		color: var(--green);
 		text-decoration: none;
 		cursor: pointer;
 		transition: all 0.2s ease;

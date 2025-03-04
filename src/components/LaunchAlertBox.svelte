@@ -121,8 +121,8 @@
 	}
 
 	.alert-box {
-		background: #393646;
-		border: 2px solid #f4eee0;
+		background: var(--dark-gray);
+		border: 2px solid var(--white);
 		border-radius: 8px;
 		padding: 2rem;
 		width: 400px;
@@ -141,7 +141,7 @@
 	}
 
 	#alert-title {
-		color: #f4eee0;
+		color: var(--white);
 		margin-bottom: 2rem;
 		font-family: "M6X11", sans-serif;
 		font-size: 2.5rem;
@@ -152,7 +152,7 @@
 	}
 
 	#alert-title-first {
-		color: #f4eee0;
+		color: var(--white);
 		font-family: "M6X11", sans-serif;
 		font-size: 1.6rem;
 	}
@@ -191,16 +191,16 @@
 		width: 25px;
 		height: 25px;
 		border-radius: 4px; /* Changed from 50% to 4px for rounded corners */
-		background: #6e6e80;
-		/* border: 2px solid #f4eee0; */
-		color: #f4eee0;
+		background: var(--gray);
+		/* border: 2px solid var(--white); */
+		color: var(--white);
 		transition: all 0.2s ease;
 	}
 
 	.close-button:hover .close-icon-container {
-		background: #c14139;
+		background: var(--red);
 		transform: scale(1.1);
-		color: #f4eee0;
+		color: var(--white);
 	}
 
 	.close-button:active .close-icon-container {
@@ -228,9 +228,9 @@
 	}
 
 	.launch-button {
-		background: #c14139;
-		border: 2px solid #a13029;
-		color: #f4eee0;
+		background: var(--red);
+		border: 2px solid var(--red-2);
+		color: var(--white);
 		padding: 0.75rem 1.5rem;
 		border-radius: 4px;
 		cursor: pointer;
@@ -239,17 +239,17 @@
 		transition: all 0.2s ease;
 	}
 	.launch-button:hover {
-		background: #a13029;
-		border: 2px solid #c14139;
+		background: var(--red-2);
+		border: 2px solid var(--red);
 	}
 	.launch-button:active {
 		transform: translateY(2px);
 	}
 
 	.check-button {
-		background: #56a786;
-		border: 2px solid #459373;
-		color: #f4eee0;
+		background: var(--green);
+		border: 2px solid var(--green-2);
+		color: var(--white);
 		padding: 0.75rem 1.5rem;
 		border-radius: 4px;
 		cursor: pointer;
@@ -259,8 +259,8 @@
 	}
 
 	.check-button:hover {
-		background: #459373;
-		border: 2px solid #56a786;
+		background: var(--green-2);
+		border: 2px solid var(--green);
 	}
 	.check-button:active {
 		transform: translateY(2px);

@@ -67,7 +67,7 @@
 		font-family: "M6X11", sans-serif;
 	}
 	p {
-		color: #f4eee0;
+		color: var(--white);
 		font-size: 1.2rem;
 		margin-bottom: 2rem;
 		font-family: "M6X11", sans-serif;
@@ -92,7 +92,7 @@
 		color: #fff;
 	}
 	.confirm-button {
-		background: #56a786;
+		background: var(--green);
 		outline: #74cca8 solid 2px;
 		color: #fff;
 	}

@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { BookOpen, Coffee } from "lucide-svelte";
+	import Profile from './Profile.svelte';
+	import { BookOpen, Coffee, Github, Globe} from "lucide-svelte";
 	import { open } from "@tauri-apps/plugin-shell";
 	import { Confetti } from "svelte-confetti";
+	import type { Developer } from "$lib/types/about";
 
 	let showConfetti = false;
 
@@ -18,6 +20,44 @@
 			console.error("Failed to open URL:", error);
 		}
 	};
+
+	const developers: Developer[] = [
+		{
+			name: "Efe / Skyline",
+			image: "/images/profile-pictures/skyline.jpg",
+			role: "The Creator and Founder of BMM",
+			socials: [
+				{
+					name: "GitHub",
+					icon: Github,
+					link: "https://github.com/skyline69",
+				},
+				{
+					name: "Website",
+					icon: Globe,
+					link: "https://dasguney.com/",
+				}
+			]
+		},
+		{
+			name: "Little",
+			image: "/images/profile-pictures/little.gif",
+			role: "Developer & UI Designer",
+			socials: [
+				{
+					name: "GitHub",
+					icon: Github,
+					link: "https://github.com/littlepriceonu",
+				},
+				{
+					name: "Website",
+					icon: Globe,
+					link: "https://littlepriceonu.com/",
+				}
+			]
+		},
+	];
+
 </script>
 
 <div class="container default-scrollbar">
@@ -73,84 +113,59 @@
 			<p id="versiontext">Current version: v0.1.7</p>
 		</div>
 	
-		<div class="profile-section">
-			<div class="profile">
-				<img src="/images/pb.jpg" alt="" />
-			</div>
-			<span class="profile-title">Efe/Skyline - The Creator of BMM</span>
+		<div class="profile-section default-scrollbar">
+			<p >Developers</p>
+
+			{#each developers as developer }
+				<Profile {developer} />
+			{/each}
 		</div>
 	</div>
 </div>
 
-<style>
+<style>	
+
 	.about-container {
 		display: flex;
 		justify-content: space-between;
 		gap: 2rem;
-		align-items: center;
 
-		padding: 0rem 2rem;
-
-		&::-webkit-scrollbar {
-			width: 10px;
-		}
-
-		&::-webkit-scrollbar-track {
-			background: transparent;
-			border-radius: 15px;
-		}
-
-		&::-webkit-scrollbar-thumb {
-			background: #f4eee0;
-			border: 2px solid rgba(193, 65, 57, 0.8);
-			border-radius: 15px;
-		}
-
-		&::-webkit-scrollbar:horizontal {
-			display: none;
-		}
-
-		&::-webkit-scrollbar-corner {
-			background-color: transparent;
-		}
+		height: 100%;
 	}
 
 	.profile-section {
+		width: 30%;
+		height: 100%;
+		padding-top: 1rem;
+
+		border-left: #f7f1e4 solid 2px;
+
+		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 1rem;
+
+		overflow: auto;
+
+		padding-bottom: 12px;
+
+		&::-webkit-scrollbar {
+			width: 8px !important;
+		}
 	}
 
-	.profile {
-		flex-shrink: 0;
-		width: 200px;
-		height: 200px;
-		border-radius: 50%;
-		overflow: hidden;
-		border: 4px solid #f7f1e4;
-		box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+	:global(.profile-section > div) {
+		margin-top: 1rem;
 	}
 
-	.profile img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
+	.profile-section > p {
+		margin: 0;
+		font-size: 1.5rem;
 	}
 
 	.content {
-		flex: 1;
-	}
-
-	.profile-title {
-		color: #f7f1e4;
-		font-size: 1rem;
-		font-family: "M6X11", sans-serif;
-		text-shadow:
-			-1px -1px 0 #000,
-			1px -1px 0 #000,
-			-1px 1px 0 #000,
-			1px 1px 0 #000;
+		width: 70%;
+		padding: 0 2rem;
 	}
 
 	.wiki-button {
@@ -182,7 +197,7 @@
 
 	.kofi-button {
 		background-color: #29abe0;
-		border: 4px solid #f4eee0;
+		border: 4px solid var(--white);
 		border-radius: 8px;
 		color: #fff;
 		padding: 0.5rem 1rem;
@@ -260,14 +275,6 @@
 		}
 		li {
 			font-size: 1rem;
-		}
-
-		.profile {
-			width: 170px;
-			height: 170px;
-		}
-		.profile-title {
-			font-size: 0.8rem;
 		}
 
 		h2 {

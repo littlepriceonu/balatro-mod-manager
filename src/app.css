@@ -9,7 +9,7 @@
     }
 
     &::-webkit-scrollbar-thumb {
-        background: #f4eee0;
+        background: var(--white);
         border: 2px solid rgba(193, 65, 57, 0.8);
         border-radius: 15px;
     }
@@ -32,7 +32,7 @@
 .spinner {
     width: 13px;
     height: 13px;
-    border: 2px solid #f4eee0;
+    border: 2px solid var(--white);
     border-bottom-color: transparent;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -57,6 +57,25 @@
     font-family: "M6X11";
     src: url("/fonts/m6x11plus.ttf") format("truetype");
     font-display: swap;
+}
+
+/* #endregion */
+
+/* #region Variables */
+
+:root {
+    --white: #f4eee0;
+    --red: #c14139;
+    --red-2: #a13029;
+    --red-3: #d4524a;
+    --green: #56a786;
+    --green-2: #459373;
+    --green-3: #63b897;
+    --blue: #00a2ff;
+    --blue-2: #0088ff;
+    --gray: #6e6e80;
+    --dark-gray: #393646;
+    --yellow: #ea9600;
 }
 
 /* #endregion */

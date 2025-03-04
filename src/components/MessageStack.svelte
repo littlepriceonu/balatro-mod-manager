@@ -89,6 +89,7 @@
 	/* Updated background colors for better contrast */
 	.success {
 		background-color: #2d6b4f;
+		/* abitrary colors so variable not needed */
 		border: 2px solid #459373;
 	}
 

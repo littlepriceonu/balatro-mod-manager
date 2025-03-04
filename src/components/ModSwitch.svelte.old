@@ -98,7 +98,7 @@
 		background-color: rgba(57, 54, 70, 0.5);
 		transition: 0.3s;
 		border-radius: 10px;
-		border: 2px solid #f4eee0;
+		border: 2px solid var(--white);
 	}
 
 	.slider:before {
@@ -108,7 +108,7 @@
 		width: 24px;
 		left: 2px;
 		bottom: 2px;
-		background-color: #f4eee0;
+		background-color: var(--white);
 		transition: 0.3s;
 		border-radius: 5px;
 	}
