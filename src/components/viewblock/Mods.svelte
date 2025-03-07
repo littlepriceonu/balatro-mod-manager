@@ -545,7 +545,7 @@
 					mod.categories.some((cat) => cat === 4)
 				);
 			case "Installed Mods":
-				return $installationStatus[mod.title];
+				return Boolean($installationStatus[mod.title]);
 			default:
 				return true;
 		}
@@ -639,6 +639,29 @@
 		updatePaginationWindow();
 	}
 
+	async function refreshInstalledMods() {
+		try {
+			await getAllInstalledMods();
+
+			// Update installation status for all mods in the store
+			for (const mod of $modsStore) {
+				const isInstalled = installedMods.some(
+					(m) => m.name === mod.title,
+				);
+				installationStatus.update((s) => ({
+					...s,
+					[mod.title]: isInstalled,
+				}));
+			}
+		} catch (error) {
+			console.error("Failed to refresh installed mods:", error);
+		}
+	}
+
+	$: if ($currentModView === null && $currentCategory === "Installed Mods") {
+		refreshInstalledMods();
+	}
+
 	// For CSS later
 	// .tags {
 	// 	position: absolute;
@@ -678,19 +701,21 @@
 				</button>
 			{/each}
 		</div>
-	
+
 		<div class="separator"></div>
-	
+
 		{#if isLoading}
 			<div class="loading-container">
-				<p class="loading-text">Loading mods{".".repeat($loadingDots)}</p>
+				<p class="loading-text">
+					Loading mods{".".repeat($loadingDots)}
+				</p>
 			</div>
 		{:else if showSearch}
 			<SearchView onCheckDependencies={handleDependencyCheck} />
 		{:else}
 			<div class="mods-wrapper">
 				<div class="controls-container">
-					<div 
+					<div
 						class="pagination-controls"
 						in:fly={{ duration: 400, y: 10, opacity: 0.2 }}
 					>
@@ -700,11 +725,12 @@
 						>
 							Previous
 						</button>
-	
+
 						{#each Array(Math.min(maxVisiblePages, totalPages)) as _, i}
 							{#if startPage + i <= totalPages}
 								<button
-									class:active={$currentPage === startPage + i}
+									class:active={$currentPage ===
+										startPage + i}
 									onclick={() => goToPage(startPage + i)}
 								>
 									{startPage + i}
@@ -718,7 +744,10 @@
 							Next
 						</button>
 					</div>
-					<div class="sort-controls" in:fly={{ duration: 400, y: 10, opacity: 0.2 }}>
+					<div
+						class="sort-controls"
+						in:fly={{ duration: 400, y: 10, opacity: 0.2 }}
+					>
 						<div class="sort-wrapper">
 							<ArrowUpDown size={16} />
 							<select
@@ -744,14 +773,19 @@
 				<div class="mods-scroll-container default-scrollbar">
 					<div class="mods-grid">
 						{#each paginatedMods as mod}
-							<ModCard {mod} onmodclick={handleModClick} oninstallclick={installMod} onuninstallclick={uninstallMod} />
+							<ModCard
+								{mod}
+								onmodclick={handleModClick}
+								oninstallclick={installMod}
+								onuninstallclick={uninstallMod}
+							/>
 						{/each}
 					</div>
 				</div>
 			</div>
 		{/if}
 	</div>
-	
+
 	{#if $currentModView}
 		<ModView
 			mod={$currentModView!}
@@ -892,7 +926,7 @@
 		overflow-y: auto;
 		height: 100%;
 	}
-	
+
 	.mods-grid {
 		padding: 2rem;
 		padding-top: 5rem;
@@ -901,7 +935,6 @@
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 		gap: 30px;
 	}
-
 
 	.sort-controls {
 		position: absolute;
@@ -983,8 +1016,6 @@
 		transform: translateY(-1px);
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 	}
-
-
 
 	.loading-container {
 		display: flex;

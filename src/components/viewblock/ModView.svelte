@@ -1,7 +1,14 @@
 <script lang="ts">
 	import { fade } from "svelte/transition";
 	import { cubicOut } from "svelte/easing";
-	import { Download, Trash2, User, ArrowLeft, Github } from "lucide-svelte";
+	import {
+		Download,
+		Trash2,
+		User,
+		ArrowLeft,
+		Github,
+		X,
+	} from "lucide-svelte";
 	import { onMount, onDestroy } from "svelte";
 	import { open } from "@tauri-apps/plugin-shell";
 	import {
@@ -9,40 +16,33 @@
 		installationStatus,
 		loadingStates2 as loadingStates,
 		uninstallDialogStore,
+		currentCategory, // Add this import
 	} from "../../stores/modStore";
 	import type { InstalledMod, Mod } from "../../stores/modStore";
 	import { marked } from "marked";
 	import { invoke } from "@tauri-apps/api/core";
 	import { cachedVersions } from "../../stores/modStore";
+	import { modsStore } from "../../stores/modStore";
+	import { untrack } from "svelte";
+
 	const VERSION_CACHE_DURATION = 60 * 60 * 1000;
-	const { mod, onCheckDependencies } = $props<{
+
+	interface Props {
 		mod: Mod;
 		onCheckDependencies?: (event: {
 			steamodded: boolean;
 			talisman: boolean;
 		}) => void;
-	}>();
+	}
+
+	const { mod, onCheckDependencies }: Props = $props();
 	const isDefaultCover = (imageUrl: string) => imageUrl.includes("cover.jpg");
 	function handleAuxClick(event: MouseEvent) {
 		if (event.button === 3) {
 			event.preventDefault();
-			handleClose();
+			handleBack();
 		}
 	}
-	// async function openImagePopup() {
-	// 	console.log("Opening popup with image:", {
-	// 		imageType: typeof mod.image,
-	// 		imageLength: mod.image.length,
-	// 		imagePreview: mod.image.substring(0, 100) + "...",
-	// 	});
-	//
-	// 	if (!isDefaultCover(mod.image)) {
-	// 		await invoke("open_image_popup", {
-	// 			imageUrl: mod.image,
-	// 			title: mod.title,
-	// 		});
-	// 	}
-	// }
 
 	let installedMods: InstalledMod[] = [];
 	let steamoddedVersions = $state<string[]>([]);
@@ -53,6 +53,106 @@
 
 	let versionLoadStarted = false;
 	let prevModTitle = "";
+	let hasCheckedInstallation = false;
+
+	let modsArray: Mod[] = [];
+	modsStore.subscribe((m) => (modsArray = m));
+
+	let skipHistoryUpdate = false;
+	let description: HTMLDivElement;
+	// Links gets pushed down the array as another gets added. The oldest link is the last one in the array.
+	let history: internalModLinkData[] = $state([]);
+
+	const linkCache = new Map<string, internalModLinkData>();
+
+	let modView: HTMLDivElement;
+
+	interface internalModLinkData {
+		isMod: boolean;
+		modName: string;
+	}
+
+	function isInternalModLink(url: string): internalModLinkData {
+		// Quickly check common non-mod paths first
+		if (!url || !url.includes("github.com")) {
+			return { isMod: false, modName: "" };
+		}
+
+		// Exclude specific paths that are not mod repositories
+		if (
+			url.match(/\.(txt|lua|json|md|png|jpg|jpeg|gif|mp3|ogg|wav)$/) ||
+			url.includes("/blob/") ||
+			url.includes("/tree/") ||
+			url.includes("/wiki") ||
+			url.includes("/actions") ||
+			url.includes("/issues") ||
+			url.includes("/pulls") ||
+			url.includes("/commits") ||
+			url.includes("/releases") ||
+			url.includes("/archive") ||
+			url.includes("/compare") ||
+			url.includes("/security") ||
+			url.includes("/projects")
+		) {
+			return { isMod: false, modName: "" };
+		}
+
+		// Common patterns for mod links
+		const githubModPattern1 =
+			/github\.com\/([^\/]+)\/([^\/\?#]+)(?:$|\?|\#)/;
+		const githubModPattern2 =
+			/github\.com\/([^\/]+)\/([^\/\?#]+)(?:\/|\/tree\/|\/blob\/)/;
+
+		// Check if URL matches any pattern
+		let match =
+			url.match(githubModPattern1) || url.match(githubModPattern2);
+
+		if (match && match[2]) {
+			// Repository name from URL
+			const repoName = match[2].toLowerCase();
+
+			// Get mods from the store - avoid subscribers in functions that run during rendering
+			let modsArray: Mod[] = [];
+			const unsubscribe = modsStore.subscribe((m) => (modsArray = m));
+			unsubscribe(); // Important: unsubscribe immediately to prevent memory leaks
+
+			// Find matching mod
+			const foundMod = modsArray.find((mod) => {
+				// Direct match
+				if (mod.title.toLowerCase() === repoName) {
+					return true;
+				}
+
+				// Match on repo URL
+				if (mod.repo && mod.repo.toLowerCase().includes(repoName)) {
+					return true;
+				}
+
+				// Match with spaces replaced
+				const titleDashes = mod.title
+					.toLowerCase()
+					.replace(/\s+/g, "-");
+				const titleUnderscores = mod.title
+					.toLowerCase()
+					.replace(/\s+/g, "_");
+				const titleNoSpaces = mod.title
+					.toLowerCase()
+					.replace(/\s+/g, "");
+
+				return (
+					repoName === titleDashes ||
+					repoName === titleUnderscores ||
+					repoName === titleNoSpaces
+				);
+			});
+
+			if (foundMod) {
+				return { isMod: true, modName: foundMod.title };
+			}
+		}
+
+		return { isMod: false, modName: "" };
+	}
 
 	async function loadSteamoddedVersions() {
 		if (loadingVersions) return;
@@ -101,6 +201,7 @@
 			loadingVersions = false;
 		}
 	}
+
 	async function loadTalismanVersions() {
 		if (loadingVersions) return;
 		try {
@@ -144,6 +245,7 @@
 			loadingVersions = false;
 		}
 	}
+
 	const getAllInstalledMods = async () => {
 		try {
 			const installed: InstalledMod[] = await invoke(
@@ -312,19 +414,123 @@
 
 	function handleMarkdownClick(event: MouseEvent | KeyboardEvent) {
 		const anchor = (event.target as HTMLElement).closest("a");
-		if (anchor && anchor.href.startsWith("http")) {
+		if (!anchor || !anchor.href) return;
+
+		// Check if this is an internal mod link using the data attribute
+		const internalModName = anchor.getAttribute("data-internal-mod");
+
+		if (internalModName) {
+			event.preventDefault();
+			event.stopPropagation(); // This is crucial
+
+			let modsArray: Mod[] = [];
+			modsStore.subscribe((m) => (modsArray = m))();
+
+			const targetMod = modsArray.find(
+				(m) => m.title === internalModName,
+			);
+			if (targetMod) {
+				currentModView.set(targetMod);
+			}
+		} else if (anchor.href.startsWith("http")) {
+			// External link
 			event.preventDefault();
 			open(anchor.href).catch((e) =>
 				console.error("Failed to open link:", e),
 			);
 		}
 	}
+
+	/**
+	 * Sets the current mod view by title
+	 * @param title
+	 * @returns success
+	 */
+	function setModViewByTitle(title: string): boolean {
+		const targetMod = modsArray.find((m) => m.title === title);
+
+		if (targetMod) {
+			currentModView.set(targetMod);
+			skipHistoryUpdate = true;
+
+			modView.scrollTo(0, 0);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	$effect(() => {
+		if (skipHistoryUpdate) {
+			skipHistoryUpdate = false;
+			return;
+		}
+
+		history = [{ isMod: true, modName: mod.title }];
+	});
+
+	async function processInternalModLinks() {
+		if (!description) return;
+
+		const links = description.querySelectorAll("a");
+
+		// Process each link
+		for (const link of links) {
+			if (link.href.startsWith("http")) {
+				let result: internalModLinkData;
+
+				if (linkCache.has(link.href)) {
+					result = linkCache.get(link.href)!;
+				} else {
+					// Use the TypeScript implementation instead of invoking Rust
+					const { isMod, modName } = isInternalModLink(link.href);
+					result = { isMod, modName };
+					linkCache.set(link.href, result);
+				}
+
+				if (result.isMod) {
+					link.classList.add("internal-mod-link");
+					// looks general better without this.
+					// link.setAttribute("title", "Open in Mod Manager");
+					link.setAttribute("data-internal-mod", result.modName);
+
+					// Add direct click handler to each internal link
+					link.onclick = (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+
+						history.unshift(result);
+
+						console.log("hist:", history);
+
+						setModViewByTitle(result.modName);
+
+						return false;
+					};
+				}
+			}
+		}
+	}
+
 	const isModInstalled = async (mod: Mod) => {
-		await getAllInstalledMods();
+		if (!mod) return false;
+
+		await getAllInstalledMods(); // Ensure we have fresh data
 		const status = installedMods.some((m) => m.name === mod.title);
-		installationStatus.update((s) => ({ ...s, [mod.title]: status }));
+
+		// Update the store outside of the reactive context
+		setTimeout(() => {
+			installationStatus.update((s) => ({
+				...s,
+				[mod.title]: status,
+			}));
+		}, 0);
+
 		return status;
 	};
+
+	// This effect handles the description rendering
 	$effect(() => {
 		if (mod?.description) {
 			Promise.resolve(marked(mod.description)).then((result) => {
@@ -334,16 +540,69 @@
 			renderedDescription = "";
 		}
 	});
+
+	// Watch for changes to renderedDescription separately
+	$effect(() => {
+		if (renderedDescription) {
+			// Use setTimeout to move to next microtask
+			setTimeout(() => {
+				processInternalModLinks();
+			}, 0);
+		}
+	});
+
+	function handleBack() {
+		if (history.length <= 1) {
+			currentModView.set(null);
+			return;
+		}
+
+		history.shift();
+
+		const modName = history[0].modName;
+		setModViewByTitle(modName);
+	}
+
 	function handleClose() {
 		currentModView.set(null);
 	}
+
 	onMount(async () => {
 		window.addEventListener("auxclick", handleAuxClick);
-		if (mod) {
-			await getAllInstalledMods();
-			await isModInstalled(mod);
+
+		// Initial load of installed mods
+		await getAllInstalledMods();
+
+		// Check if the current mod is installed
+		if (mod && !hasCheckedInstallation) {
+			hasCheckedInstallation = true;
+			setTimeout(() => {
+				isModInstalled(mod);
+			}, 0);
 		}
 	});
+
+	// Handle mod changes from currentModView
+	$effect(() => {
+		const currentMod = untrack(() => $currentModView);
+
+		if (currentMod) {
+			// Check if this is a new mod
+			if (
+				!hasCheckedInstallation ||
+				(mod && mod.title !== currentMod.title)
+			) {
+				hasCheckedInstallation = true;
+
+				// Move installation check outside reactive context
+				setTimeout(() => {
+					isModInstalled(currentMod);
+				}, 0);
+			}
+		}
+	});
+
+	// Handle loading of version data for special mods
 	$effect(() => {
 		const currentModTitle = mod?.title?.toLowerCase();
 		if (
@@ -353,9 +612,13 @@
 		) {
 			prevModTitle = currentModTitle;
 			versionLoadStarted = true;
-			loadSteamoddedVersions().then(() => {
-				versionLoadStarted = false;
-			});
+
+			// Move version loading outside reactive context
+			setTimeout(() => {
+				loadSteamoddedVersions().then(() => {
+					versionLoadStarted = false;
+				});
+			}, 0);
 		} else if (
 			currentModTitle === "talisman" &&
 			currentModTitle !== prevModTitle &&
@@ -363,21 +626,40 @@
 		) {
 			prevModTitle = currentModTitle;
 			versionLoadStarted = true;
-			loadTalismanVersions().then(() => {
-				versionLoadStarted = false;
-			});
+
+			// Move version loading outside reactive context
+			setTimeout(() => {
+				loadTalismanVersions().then(() => {
+					versionLoadStarted = false;
+				});
+			}, 0);
 		}
 	});
+
 	onDestroy(async () => {
 		window.removeEventListener("auxclick", handleAuxClick);
 		cachedVersions.set({ steamodded: [], talisman: [] });
+
+		// Ensure installation status is updated before component unmounts
+		if ($currentCategory === "Installed Mods") {
+			await getAllInstalledMods();
+			for (const mod of modsArray) {
+				const isInstalled = installedMods.some(
+					(m) => m.name === mod.title,
+				);
+				installationStatus.update((s) => ({
+					...s,
+					[mod.title]: isInstalled,
+				}));
+			}
+		}
 	});
 </script>
 
 <svelte:window
 	on:keydown={(e) => {
 		if (e.key === "Backspace" || e.key === "Escape") {
-			handleClose();
+			handleBack();
 		}
 	}}
 />
@@ -385,11 +667,27 @@
 <div
 	class="mod-view default-scrollbar"
 	transition:fade={{ duration: 300, easing: cubicOut }}
+	bind:this={modView}
 >
-	<button class="back-button" onclick={handleClose}>
-		<ArrowLeft size={20} /> <span>Back</span>
-	</button>
 	<div class="mod-content">
+		<div class="header-container">
+			<div class="header">
+				<button class="back-button" onclick={handleBack}>
+					<ArrowLeft size={20} /> <span>Back</span>
+				</button>
+
+				{#if history.length > 1}
+					<button
+						transition:fade={{ duration: 300, easing: cubicOut }}
+						onclick={handleClose}
+						class="close-button"
+					>
+						<X size={20} />
+					</button>
+				{/if}
+			</div>
+		</div>
+
 		<h2>{mod.title}</h2>
 		<div class="content-grid">
 			<div class="left-column">
@@ -500,6 +798,7 @@
 				<div
 					class="description"
 					role="button"
+					bind:this={description}
 					tabindex="0"
 					onclick={handleMarkdownClick}
 					onkeydown={(e) => {
@@ -535,7 +834,9 @@
 	}
 
 	.mod-content {
-		max-width: 1000px;
+		position: relative;
+
+		/* max-width: 1000px; */
 		padding: 3rem;
 		color: #f4eee0;
 		font-family: "M6X11", sans-serif;
@@ -730,10 +1031,22 @@
 		color: #79c0ff;
 	}
 
-	.back-button {
+	.header-container {
 		position: absolute;
-		top: 1rem;
-		left: 1rem;
+		top: 0;
+		left: 0;
+		height: 100%;
+		width: 100%;
+
+		z-index: 999;
+
+		pointer-events: none;
+	}
+
+	.back-button {
+		position: relative;
+		/* top: 1rem;
+		left: 1rem; */
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
@@ -746,11 +1059,68 @@
 		transition: all 0.2s ease;
 		font-family: "M6X11", sans-serif;
 		font-size: 1rem;
+		z-index: 100;
+
+		pointer-events: auto;
+
+		backdrop-filter: blur(20px) brightness(0.7);
+	}
+
+	.close-button {
+		position: relative;
+		/* top: 1rem;
+		right: 1rem; */
+
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0.5rem;
+		border-radius: 6px;
+
+		background: rgba(244, 238, 224, 0.1);
+		border: none;
+		color: #f4eee0;
+
+		cursor: pointer;
+		transition: all 0.2s ease;
+
+		font-family: "M6X11", sans-serif;
+		font-size: 1rem;
+
+		z-index: 100;
+		pointer-events: auto;
+
+		backdrop-filter: blur(20px) brightness(0.7);
+	}
+
+	.close-button:hover {
+		scale: 1.1;
+		background: rgba(244, 238, 224, 0.2);
+	}
+
+	.close-button:active {
+		scale: 0.95;
+		background: rgba(218, 212, 201, 0.1);
 	}
 
 	.back-button:hover {
 		background: rgba(244, 238, 224, 0.2);
 		transform: translateX(-5px);
+	}
+
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
+		box-sizing: border-box;
+		position: sticky;
+
+		top: 1rem;
+		width: 100%;
+		height: 2.5rem;
+
+		padding: 0 1rem;
 	}
 
 	.description :global(h1),
@@ -779,9 +1149,41 @@
 		color: #56a786;
 		text-decoration: none;
 	}
+	.description :global(a.internal-mod-link) {
+		/* Use Balatro's gold color for internal mod links */
+		color: #fdcf51 !important;
+		position: relative;
+	}
+
+	.description :global(a.internal-mod-link::after) {
+		display: inline-block;
+		margin-left: 3px;
+		transform: rotate(-45deg);
+		font-weight: bold;
+	}
+
+	.description :global(a.internal-mod-link:hover) {
+		text-decoration: underline;
+		filter: brightness(1.2);
+	}
+
+	.description :global(a.internal-mod-link:hover::before) {
+		content: "Open in Mod Manager";
+		position: absolute;
+		bottom: -35px;
+		left: 0;
+		background: rgba(0, 0, 0, 0.8);
+		color: white;
+		padding: 4px 8px;
+		border-radius: 4px;
+		font-size: 0.8em;
+		white-space: nowrap;
+		z-index: 10;
+	}
 
 	.description :global(a:hover) {
 		text-decoration: underline;
+		z-index: 10;
 	}
 
 	.description :global(blockquote) {
@@ -811,16 +1213,42 @@
 	/* 	cursor: pointer; */
 	/* } */
 
-	@media (max-width: 1160px) {
+	@media (max-width: 1360px) {
 		.content-grid {
 			grid-template-columns: 1fr;
 		}
 		.image-container {
 			width: 100%;
+			height: 350px;
+
+			& > img {
+				height: 100%;
+			}
 		}
+
+		.image-button {
+			height: 100%;
+
+			& > img {
+				height: 100%;
+			}
+		}
+
 		.right-column {
 			bottom: 2rem;
 			position: relative;
+		}
+
+		.mod-content {
+			width: 100%;
+			max-width: 100%;
+			box-sizing: border-box;
+		}
+
+		.right-column {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
 		}
 	}
 

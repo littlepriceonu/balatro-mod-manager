@@ -1,9 +1,9 @@
 {
   "version": "4",
   "specifiers": {
-    "npm:@sveltejs/adapter-static@^3.0.8": "3.0.8_@sveltejs+kit@2.17.3__@sveltejs+vite-plugin-svelte@5.0.3___svelte@5.20.5____acorn@8.14.0___vite@6.2.0__svelte@5.20.5___acorn@8.14.0__vite@6.2.0_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.20.5___acorn@8.14.0__vite@6.2.0_svelte@5.20.5__acorn@8.14.0_vite@6.2.0",
-    "npm:@sveltejs/kit@^2.17.3": "2.17.3_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.20.5___acorn@8.14.0__vite@6.2.0_svelte@5.20.5__acorn@8.14.0_vite@6.2.0",
-    "npm:@sveltejs/vite-plugin-svelte@^5.0.3": "5.0.3_svelte@5.20.5__acorn@8.14.0_vite@6.2.0",
+    "npm:@sveltejs/adapter-static@^3.0.8": "3.0.8_@sveltejs+kit@2.17.3__@sveltejs+vite-plugin-svelte@5.0.3___svelte@5.21.0____acorn@8.14.0___vite@6.2.0__svelte@5.21.0___acorn@8.14.0__vite@6.2.0_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.21.0___acorn@8.14.0__vite@6.2.0_svelte@5.21.0__acorn@8.14.0_vite@6.2.0",
+    "npm:@sveltejs/kit@^2.17.3": "2.17.3_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.21.0___acorn@8.14.0__vite@6.2.0_svelte@5.21.0__acorn@8.14.0_vite@6.2.0",
+    "npm:@sveltejs/vite-plugin-svelte@^5.0.3": "5.0.3_svelte@5.21.0__acorn@8.14.0_vite@6.2.0",
     "npm:@tauri-apps/api@^2.2.0": "2.2.0",
     "npm:@tauri-apps/api@^2.3.0": "2.3.0",
     "npm:@tauri-apps/cli@^2.3.1": "2.3.1",
@@ -15,11 +15,11 @@
     "npm:axios@^1.8.1": "1.8.1",
     "npm:flexsearch@~0.7.43": "0.7.43",
     "npm:lodash@^4.17.21": "4.17.21",
-    "npm:lucide-svelte@0.477": "0.477.0_svelte@5.20.5__acorn@8.14.0",
+    "npm:lucide-svelte@0.477": "0.477.0_svelte@5.21.0__acorn@8.14.0",
     "npm:marked@^15.0.7": "15.0.7",
-    "npm:svelte-check@^4.1.4": "4.1.4_svelte@5.20.5__acorn@8.14.0_typescript@5.8.2",
-    "npm:svelte-confetti@^2.3.1": "2.3.1_svelte@5.20.5__acorn@8.14.0",
-    "npm:svelte@^5.20.5": "5.20.5_acorn@8.14.0",
+    "npm:svelte-check@^4.1.4": "4.1.4_svelte@5.21.0__acorn@8.14.0_typescript@5.8.2",
+    "npm:svelte-confetti@^2.3.1": "2.3.1_svelte@5.21.0__acorn@8.14.0",
+    "npm:svelte@^5.21.0": "5.21.0_acorn@8.14.0",
     "npm:tslib@^2.8.1": "2.8.1",
     "npm:typescript@^5.8.2": "5.8.2",
     "npm:vite@^6.2.0": "6.2.0"
@@ -191,13 +191,13 @@
     "@rollup/rollup-win32-x64-msvc@4.34.8": {
       "integrity": "sha512-U0FaE5O1BCpZSeE6gBl3c5ObhePQSfk9vDRToMmTkbhCOgW4jqvtS5LGyQ76L1fH8sM0keRp4uDTsbjiUyjk0g=="
     },
-    "@sveltejs/adapter-static@3.0.8_@sveltejs+kit@2.17.3__@sveltejs+vite-plugin-svelte@5.0.3___svelte@5.20.5____acorn@8.14.0___vite@6.2.0__svelte@5.20.5___acorn@8.14.0__vite@6.2.0_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.20.5___acorn@8.14.0__vite@6.2.0_svelte@5.20.5__acorn@8.14.0_vite@6.2.0": {
+    "@sveltejs/adapter-static@3.0.8_@sveltejs+kit@2.17.3__@sveltejs+vite-plugin-svelte@5.0.3___svelte@5.21.0____acorn@8.14.0___vite@6.2.0__svelte@5.21.0___acorn@8.14.0__vite@6.2.0_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.21.0___acorn@8.14.0__vite@6.2.0_svelte@5.21.0__acorn@8.14.0_vite@6.2.0": {
       "integrity": "sha512-YaDrquRpZwfcXbnlDsSrBQNCChVOT9MGuSg+dMAyfsAa1SmiAhrA5jUYUiIMC59G92kIbY/AaQOWcBdq+lh+zg==",
       "dependencies": [
         "@sveltejs/kit"
       ]
     },
-    "@sveltejs/kit@2.17.3_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.20.5___acorn@8.14.0__vite@6.2.0_svelte@5.20.5__acorn@8.14.0_vite@6.2.0": {
+    "@sveltejs/kit@2.17.3_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.21.0___acorn@8.14.0__vite@6.2.0_svelte@5.21.0__acorn@8.14.0_vite@6.2.0": {
       "integrity": "sha512-GcNaPDr0ti4O/TonPewkML2DG7UVXkSxPN3nPMlpmx0Rs4b2kVP4gymz98WEHlfzPXdd4uOOT1Js26DtieTNBQ==",
       "dependencies": [
         "@sveltejs/vite-plugin-svelte",
@@ -216,7 +216,7 @@
         "vite"
       ]
     },
-    "@sveltejs/vite-plugin-svelte-inspector@4.0.1_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.20.5___acorn@8.14.0__vite@6.2.0_svelte@5.20.5__acorn@8.14.0_vite@6.2.0": {
+    "@sveltejs/vite-plugin-svelte-inspector@4.0.1_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.21.0___acorn@8.14.0__vite@6.2.0_svelte@5.21.0__acorn@8.14.0_vite@6.2.0": {
       "integrity": "sha512-J/Nmb2Q2y7mck2hyCX4ckVHcR5tu2J+MtBEQqpDrrgELZ2uvraQcK/ioCV61AqkdXFgriksOKIceDcQmqnGhVw==",
       "dependencies": [
         "@sveltejs/vite-plugin-svelte",
@@ -225,7 +225,7 @@
         "vite"
       ]
     },
-    "@sveltejs/vite-plugin-svelte@5.0.3_svelte@5.20.5__acorn@8.14.0_vite@6.2.0": {
+    "@sveltejs/vite-plugin-svelte@5.0.3_svelte@5.21.0__acorn@8.14.0_vite@6.2.0": {
       "integrity": "sha512-MCFS6CrQDu1yGwspm4qtli0e63vaPCehf6V7pIMP15AsWgMKrqDGCPFF/0kn4SP0ii4aySu4Pa62+fIRGFMjgw==",
       "dependencies": [
         "@sveltejs/vite-plugin-svelte-inspector",
@@ -535,7 +535,7 @@
     "lodash@4.17.21": {
       "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
     },
-    "lucide-svelte@0.477.0_svelte@5.20.5__acorn@8.14.0": {
+    "lucide-svelte@0.477.0_svelte@5.21.0__acorn@8.14.0": {
       "integrity": "sha512-w/zj6/CXTtTizIeo8SuWGYu0u45CJ7cD2AtNzIObVHZrWXNgaIIX/2cI25wybjSmYHIi4pub2TLv/kNPKiB3ww==",
       "dependencies": [
         "svelte"
@@ -637,7 +637,7 @@
     "source-map-js@1.2.1": {
       "integrity": "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="
     },
-    "svelte-check@4.1.4_svelte@5.20.5__acorn@8.14.0_typescript@5.8.2": {
+    "svelte-check@4.1.4_svelte@5.21.0__acorn@8.14.0_typescript@5.8.2": {
       "integrity": "sha512-v0j7yLbT29MezzaQJPEDwksybTE2Ups9rUxEXy92T06TiA0cbqcO8wAOwNUVkFW6B0hsYHA+oAX3BS8b/2oHtw==",
       "dependencies": [
         "@jridgewell/trace-mapping",
@@ -649,14 +649,14 @@
         "typescript"
       ]
     },
-    "svelte-confetti@2.3.1_svelte@5.20.5__acorn@8.14.0": {
+    "svelte-confetti@2.3.1_svelte@5.21.0__acorn@8.14.0": {
       "integrity": "sha512-bKd8etTOeBQyeS9LDPuSd7Oqy5msf0xvxItzsHPajKaarr/LWFzqPq7rp6QQO5rGTzLgM0fmjovOvLkRbrd2gg==",
       "dependencies": [
         "svelte"
       ]
     },
-    "svelte@5.20.5_acorn@8.14.0": {
-      "integrity": "sha512-dpu2lTPVsAAgZFKpF7A9741sBCdXGogfxFU4aQeVgun7GVNCSVheTzj0FsT7g9OsLhBaMX4lKLwVIvmzQGytmQ==",
+    "svelte@5.21.0_acorn@8.14.0": {
+      "integrity": "sha512-+pUFl4d0cu2KoxTtwjzByneCXbUzsNlGc4zMDDT/r2usp3VowYEGu1mFvbjcxmWTkwoy3tyhOg7fsz5aJo0wHw==",
       "dependencies": [
         "@ampproject/remapping",
         "@jridgewell/sourcemap-codec",
@@ -722,7 +722,7 @@
         "npm:marked@^15.0.7",
         "npm:svelte-check@^4.1.4",
         "npm:svelte-confetti@^2.3.1",
-        "npm:svelte@^5.20.5",
+        "npm:svelte@^5.21.0",
         "npm:tslib@^2.8.1",
         "npm:typescript@^5.8.2",
         "npm:vite@^6.2.0"
